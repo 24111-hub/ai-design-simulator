@@ -204,7 +204,7 @@ document.getElementById("mainPage").style.display="none";
 
 });
 
- window.generateIdea = async () => {
+window.generateIdea = async () => {
 
 const problem =
 document.getElementById("problemInput").value.trim();
@@ -228,6 +228,30 @@ problem:problem
 })
 }
 );
+
+const data = await response.json();
+
+document.getElementById("resultBox").innerHTML =
+`
+<h3>AI 분석 결과</h3>
+<pre style="white-space:pre-wrap;">
+${data.answer}
+</pre>
+`;
+
+}catch(error){
+
+document.getElementById("resultBox").innerHTML =
+`
+<p style="color:red;">
+오류 발생<br>
+${error.message}
+</p>
+`;
+
+}
+
+};
 
 const data = await response.json();
 
