@@ -6,8 +6,9 @@
 <title>AI 기계 설계 시뮬레이터</title>
 
 <style>
+
 body{
-font-family:Arial;
+font-family:Arial,sans-serif;
 background:#f4f6f8;
 padding:30px;
 }
@@ -18,9 +19,10 @@ margin:auto;
 background:white;
 padding:20px;
 border-radius:15px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
-input{
+input,textarea{
 width:100%;
 padding:10px;
 margin:10px 0;
@@ -29,11 +31,21 @@ margin:10px 0;
 button{
 padding:10px 15px;
 cursor:pointer;
+margin-top:5px;
 }
 
 #mainPage{
 display:none;
 }
+
+#resultBox{
+margin-top:20px;
+padding:15px;
+background:#f8f8f8;
+border-radius:10px;
+white-space:pre-wrap;
+}
+
 </style>
 </head>
 <body>
@@ -47,7 +59,6 @@ display:none;
 <h3>회원가입</h3>
 
 <input id="signupEmail" placeholder="이메일">
-
 <input id="signupPassword" type="password" placeholder="비밀번호">
 
 <button onclick="signUp()">
@@ -59,7 +70,6 @@ display:none;
 <h3>로그인</h3>
 
 <input id="loginEmail" placeholder="이메일">
-
 <input id="loginPassword" type="password" placeholder="비밀번호">
 
 <button onclick="login()">
@@ -76,8 +86,6 @@ display:none;
 로그아웃
 </button>
 
-<p>로그인 성공!</p>
-
 <hr>
 
 <h3>문제 입력</h3>
@@ -85,16 +93,13 @@ display:none;
 <textarea
 id="problemInput"
 placeholder="예: 휴대폰 충전 케이블이 자주 끊어진다."
-style="width:100%; height:120px;">
-</textarea>
-
-<br><br>
+rows="6"></textarea>
 
 <button onclick="generateIdea()">
 AI 설계 생성
 </button>
 
-<div id="resultBox" style="margin-top:20px;"></div>
+<div id="resultBox"></div>
 
 </div>
 
@@ -127,20 +132,17 @@ appId: "1:626753939152:web:485e286ff8e5b596bf20d5"
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+const APPS_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbw4_IWBMOIbIOxOwYguHp2uV__ahFikRPD9q2Wla9iVFJrc4G9jneYqMYQrn4k2VzkK/exec";
+
 window.signUp = async () => {
-
-const email =
-document.getElementById("signupEmail").value;
-
-const password =
-document.getElementById("signupPassword").value;
 
 try{
 
 await createUserWithEmailAndPassword(
 auth,
-email,
-password
+document.getElementById("signupEmail").value,
+document.getElementById("signupPassword").value
 );
 
 alert("회원가입 성공");
@@ -155,18 +157,12 @@ alert(error.message);
 
 window.login = async () => {
 
-const email =
-document.getElementById("loginEmail").value;
-
-const password =
-document.getElementById("loginPassword").value;
-
 try{
 
 await signInWithEmailAndPassword(
 auth,
-email,
-password
+document.getElementById("loginEmail").value,
+document.getElementById("loginPassword").value
 );
 
 }catch(error){
@@ -188,16 +184,12 @@ onAuthStateChanged(auth,(user)=>{
 if(user){
 
 document.getElementById("loginPage").style.display="none";
-
 document.getElementById("mainPage").style.display="block";
-
-document.getElementById("userInfo").innerText=
-user.email;
+document.getElementById("userInfo").innerText=user.email;
 
 }else{
 
 document.getElementById("loginPage").style.display="block";
-
 document.getElementById("mainPage").style.display="none";
 
 }
@@ -210,12 +202,14 @@ const problem =
 document.getElementById("problemInput").value.trim();
 
 if(!problem){
+
 alert("문제를 입력하세요.");
 return;
+
 }
 
 document.getElementById("resultBox").innerHTML =
-"AI가 분석 중입니다...";
+"AI 분석 중...";
 
 try{
 
@@ -232,58 +226,12 @@ problem:problem
 const data = await response.json();
 
 document.getElementById("resultBox").innerHTML =
-`
-<h3>AI 분석 결과</h3>
-<pre style="white-space:pre-wrap;">
-${data.answer}
-</pre>
-`;
+data.answer || "응답 없음";
 
 }catch(error){
 
 document.getElementById("resultBox").innerHTML =
-`
-<p style="color:red;">
-오류 발생<br>
-${error.message}
-</p>
-`;
-
-}
-
-};
-
-const data = await response.json();
-
-if(data.error){
-throw new Error(data.error);
-}
-
-document.getElementById("resultBox").innerHTML =
-`
-<h3>입력한 문제</h3>
-<p>${problem}</p>
-
-<hr>
-
-<h3>AI 분석 결과</h3>
-<pre style="
-white-space:pre-wrap;
-font-family:Arial;
-">
-${data.answer}
-</pre>
-`;
-
-}catch(error){
-
-document.getElementById("resultBox").innerHTML =
-`
-<p style="color:red;">
-오류 발생<br>
-${error.message}
-</p>
-`;
+"오류 : " + error.message;
 
 }
 
