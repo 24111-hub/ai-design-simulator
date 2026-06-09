@@ -76,9 +76,25 @@ display:none;
 로그아웃
 </button>
 
-<p>
-로그인 성공!
-</p>
+<p>로그인 성공!</p>
+
+<hr>
+
+<h3>문제 입력</h3>
+
+<textarea
+id="problemInput"
+placeholder="예: 휴대폰 충전 케이블이 자주 끊어진다."
+style="width:100%; height:120px;">
+</textarea>
+
+<br><br>
+
+<button onclick="generateIdea()">
+AI 설계 생성
+</button>
+
+<div id="resultBox" style="margin-top:20px;"></div>
 
 </div>
 
@@ -187,6 +203,19 @@ document.getElementById("mainPage").style.display="none";
 }
 
 });
+
+  window.generateIdea = () => {
+
+const problem =
+document.getElementById("problemInput").value;
+
+document.getElementById("resultBox").innerHTML =
+`
+<h3>입력한 문제</h3>
+<p>${problem}</p>
+`;
+
+};
 
 </script>
 
