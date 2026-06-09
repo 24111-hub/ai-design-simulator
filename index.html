@@ -204,16 +204,64 @@ document.getElementById("mainPage").style.display="none";
 
 });
 
-  window.generateIdea = () => {
+ window.generateIdea = async () => {
 
 const problem =
-document.getElementById("problemInput").value;
+document.getElementById("problemInput").value.trim();
+
+if(!problem){
+alert("문제를 입력하세요.");
+return;
+}
+
+document.getElementById("resultBox").innerHTML =
+"AI가 분석 중입니다...";
+
+try{
+
+const response = await fetch(
+APPS_SCRIPT_URL,
+{
+method:"POST",
+body:JSON.stringify({
+problem:problem
+})
+}
+);
+
+const data = await response.json();
+
+if(data.error){
+throw new Error(data.error);
+}
 
 document.getElementById("resultBox").innerHTML =
 `
 <h3>입력한 문제</h3>
 <p>${problem}</p>
+
+<hr>
+
+<h3>AI 분석 결과</h3>
+<pre style="
+white-space:pre-wrap;
+font-family:Arial;
+">
+${data.answer}
+</pre>
 `;
+
+}catch(error){
+
+document.getElementById("resultBox").innerHTML =
+`
+<p style="color:red;">
+오류 발생<br>
+${error.message}
+</p>
+`;
+
+}
 
 };
 
