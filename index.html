@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="ko"><head>    
+<!DOCTYPE html>
+<html lang="ko">
+<head>    
     <meta charset="UTF-8">    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">    
     <title>AI 기반 3D 기계 설계 다각도 시뮬레이터</title>        
@@ -16,11 +18,11 @@
         #canvas-container { width: 100%; height: 100%; }        
         .viewer-hint { position: absolute; top: 10px; right: 10px; color: #aaa; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; }    
     </style>    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>    
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>    
 </head>
 <body>    
     <header>        
@@ -33,7 +35,7 @@
     <div class="main-container">        
         <div class="control-panel">            
             <h3>🤖 AI 기계 설계 가이더</h3>            
-            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>            
+            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p            
             <textarea id="user-input" rows="3" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>            
             <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>                        
             <hr style="width:100%; border: 0; border-top: 1px solid #eee;">                        
@@ -47,9 +49,9 @@
         </div>    
     </div>    
 
-    <script>        
+    <script>
         // ==========================================        
-        // [설정] Firebase 및 Apps Script 연결 정보 (검증 완료된 정보)      
+        // [설정] 초기화 정보 선언 (문법 검증 완료)
         // ==========================================        
         const firebaseConfig = {
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
@@ -61,23 +63,24 @@
             appId: "1:626753939152:web:485e286ff8e5b596bf20d5",
             measurementId: "G-QMSFMGJG0J"
         };        
+        
         firebase.initializeApp(firebaseConfig);                
         
-        // 💡 주의: 뒤에 대문자 L 등 오타가 안 붙었는지 주소를 꼭 한 번 더 직접 확인하세요!
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxB1h2mET18TX9ucgCxKLlVjHBrd6p-kpMsoXMG1fsPZVo_Au9cl_SAi4uVaAMWqvtK/exec";                
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPtGZyjCHfkpHmS-kCrKER4sYYp0vi9LsiQFiRHXr9h9iNvByrf6oLAioyBgW7Vkg/exec";                
         
         let currentAIExplanation = "";         
-        let currentMesh; // 화면에 표시 중인 기계 부품 저장용 변수        
+        let currentMesh;
 
         // ==========================================        
-        // [기능 1] Firebase Auth 시스템        
+        // [기능 1] Firebase Auth 로그인 제어 함수
         // ==========================================        
         const provider = new firebase.auth.GoogleAuthProvider();                
         
         function toggleLogin() {            
             const user = firebase.auth().currentUser;            
             if (!user) {                
-                firebase.auth().signInWithPopup(provider);            
+                firebase.auth().signInWithPopup(provider)
+                    .catch(err => console.error("인증 창 오류:", err));            
             } else {                
                 firebase.auth().signOut();            
             }        
@@ -99,7 +102,7 @@
         });        
 
         // ==========================================        
-        // [기능 2] Three.js 다각도 관찰 엔진 설정        
+        // [기능 2] Three.js 3D 뷰어 그래픽스 엔진
         // ==========================================        
         const container = document.getElementById('canvas-container');        
         const scene = new THREE.Scene();        
@@ -130,7 +133,6 @@
         dirLight2.position.set(-5, -2, -5);        
         scene.add(dirLight2);        
         
-        // 초기 기본 부품 모양 로드
         createMachinePart("cylinder", 1, 2);        
         
         function createMachinePart(type, radius, height) {            
@@ -171,7 +173,7 @@
         });        
 
         // ==========================================        
-        // [기능 3] AI 연동 및 데이터 추출 (안전 예외 처리 강화)        
+        // [기능 3] AI 설계 파싱 통신 엔진
         // ==========================================        
         async function askAI() {            
             const userInput = document.getElementById('user-input').value;            
@@ -180,7 +182,7 @@
             const outputDiv = document.getElementById('ai-output');            
             outputDiv.innerText = "엔지니어의 요구사항을 기반으로 3D 연산 및 사양 도출 중...";            
             
-            const systemPrompt = `${userInput} -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 말은 일절 배제하고 오직 아래 약속된 JSON 포맷으로만 출력해야 해.            {               "shapeType": "cylinder" 또는 "gear" 또는 "box" 중 어울리는 것 하나 선택,               "radius": 추천하는 반지름 숫자 (0.5 ~ 2.5 사이),               "height": 추천하는 높이나 두께 숫자 (0.2 ~ 3.5 사이),               "description": "이 기계 부품이 요구사항에 왜 적합하며, 어떤 역학적 특징을 가지는지 설명하는 친절한 한국어 문장"             }`;            
+            const systemPrompt = userInput + " -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 설명 텍스트 없이 오직 다음 구조의 JSON 포맷으로만 응답해야 해. { \"shapeType\": \"cylinder\" 또는 \"gear\" 또는 \"box\", \"radius\": 반지름 숫자, \"height\": 높이 숫자, \"description\": \"역학 특징 설명 문장\" }";            
             
             try {                
                 const response = await fetch(APPS_SCRIPT_URL, {                    
@@ -194,40 +196,34 @@
                 rawText = rawText.replace(/```json|```/gi, "").trim();                
                 const firstOpen = rawText.indexOf('{');                
                 const lastClose = rawText.lastIndexOf('}');                
-                if (firstOpen === -1 || lastClose === -1) throw new Error("JSON 파싱 에러");                
+                if (firstOpen === -1 || lastClose === -1) throw new Error("JSON 구조를 찾을 수 없습니다.");                
                 rawText = rawText.substring(firstOpen, lastClose + 1);                                
                 
                 const aiData = JSON.parse(rawText);                
                 
-                // 💡 [안전장치] 어떤 키명으로 와도 undefined 에러가 나지 않도록 유연하게 파싱
                 const shape = aiData.shapeType || aiData.shape || "cylinder";                
                 const r = Number(aiData.radius) || 1;                
                 const h = Number(aiData.height) || 2;                
-                currentAIExplanation = aiData.description || "설계가 성공적으로 완료되었습니다.";                
+                currentAIExplanation = aiData.description || "설계가 성공적으로 처리되었습니다.";                
                 
-                // 1. 3D 모델 실시간 업데이트
                 createMachinePart(shape, r, h);                                
-                // 2. 카메라 시점 재설정
                 controls.target.set(0, h/2, 0);                
-                // 3. UI 텍스트 출력
-                outputDiv.innerText = `📐 [AI 정밀 설계 도면]\n- 형태 유형: ${shape.toUpperCase()}\n- 주요 직경/반지름: ${r}m\n- 전체 높이/두께: ${h}m\n\n💡 [역학 가이드라인]\n${currentAIExplanation}`;                
                 
-                // 4. TTS 실행                
+                outputDiv.innerText = "📐 [AI 정밀 설계 도면]\n- 형태 유형: " + shape.toUpperCase() + "\n- 주요 직경/반지름: " + r + "m\n- 전체 높이/두께: " + h + "m\n\n💡 [역학 가이드라인]\n" + currentAIExplanation;                
+                
                 speakResult();                
-                
-                // 5. Firebase 아카이브 백업 (빈 데이터 에러 원천 차단)                
                 saveToFirestore(userInput, shape, r, h);            
             } catch (error) {                
                 console.error(error);                
-                outputDiv.innerText = `⚠️ 3D 설계 도중 데이터 어긋남이 발생했습니다.\n다시 한 번 명령을 입력해보거나 Apps Script 주소를 확인해주세요.`;            
+                outputDiv.innerText = "⚠️ 데이터 처리에 오류가 있거나 API가 반환한 규격이 다릅니다.\n이전 단계에서 Apps Script에 진짜 Gemini API 키를 넣고 [새 버전] 배포를 완료했는지 점검해 주세요.";            
             }        
         }        
 
         // ==========================================        
-        // [기능 4] TTS 기능        
+        // [기능 4] 음성 음향 안내 엔진 (TTS)
         // ==========================================        
         function speakResult() {            
-            if (!currentAIExplanation) return alert("출력된 설계 도슨트 가이드가 없습니다.");                        
+            if (!currentAIExplanation) return;                        
             window.speechSynthesis.cancel();             
             const utterance = new SpeechSynthesisUtterance(currentAIExplanation);            
             utterance.lang = 'ko-KR';            
@@ -236,7 +232,7 @@
         }        
 
         // ==========================================        
-        // [기능 5] Firebase Firestore 데이터 아카이빙 (undefined 완전 보완 방어형 코드)        
+        // [기능 5] Cloud Firestore 데이터베이스 백업
         // ==========================================        
         function saveToFirestore(prompt, shape, radius, height) {            
             const user = firebase.auth().currentUser;            
@@ -244,18 +240,19 @@
                 firebase.firestore().collection("machinery_blueprints").add({                    
                     engineerId: user.uid,                    
                     engineerEmail: user.email,                    
-                    inputCommand: prompt || "명령 텍스트 공백",                    
+                    inputCommand: prompt || "공백 명령",                    
                     blueprint: {                        
                         shape: shape || "cylinder",                        
                         radius: Number(radius) || 1,                        
                         height: Number(height) || 2                    
                     },                    
-                    engineeringNote: currentAIExplanation || "분석 가이드라인 공백",                    
+                    engineeringNote: currentAIExplanation || "공백 노트",                    
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()                
                 })                
-                .then(() => console.log("💾 도면 데이터가 성공적으로 클라우드 서버에 백업되었습니다."))                
-                .catch(err => console.error("❌ 백업 실패:", err));            
+                .then(() => console.log("💾 도면이 클라우드 서버에 성공적으로 백업되었습니다."))                
+                .catch(err => console.error("❌ 데이터베이스 백업 실패:", err));            
             }        
         }    
     </script>
-</body></html>
+</body>
+</html>
