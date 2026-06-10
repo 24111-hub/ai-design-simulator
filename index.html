@@ -10,7 +10,7 @@
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }        
         .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #fafafa; }        
         .viewer-panel { width: 65%; position: relative; background: #1e1e1e; }        
-        input, button, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; }        
+        input, button, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; display: block; width: 100%; box-sizing: border-box; }        
         textarea { resize: none; }        
         button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }        
         button:hover { background: #0056b3; }        
@@ -29,16 +29,18 @@
         <h2>⚙️ AI Mechanical 3D Design Studio</h2>        
         <div>            
             <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>            
-            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>        
+            <button id="btn-login" onclick="toggleLogin()" style="display:inline-block; width:auto; padding:8px 15px;">구글 로그인</button>        
         </div>    
     </header>    
     <div class="main-container">        
         <div class="control-panel">            
             <h3>🤖 AI 기계 설계 가이더</h3>            
             <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>            
+            
             <textarea id="user-input" rows="3" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>            
+            
             <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>                        
-            <hr style="width:100%; border: 0; border-top: 1px solid #eee;">                        
+            <hr style="width:100%; border: 0; border-top: 1px solid #eee; margin: 5px 0;">                        
             <h4>📋 설계 사양 및 도면 설명</h4>            
             <div id="ai-output">설계 명령을 내리면 데이터가 실시간으로 분석됩니다.</div>            
             <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 도슨트 설명 듣기 (TTS)</button>        
@@ -51,7 +53,7 @@
 
     <script>
         // ==========================================        
-        // [설정] Firebase 및 Apps Script 연결 정보 (따옴표 오타 박멸)
+        // [설정] Firebase 및 Apps Script 연결 정보 (검증 완료)
         // ==========================================        
         const firebaseConfig = {
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
@@ -66,8 +68,7 @@
         
         firebase.initializeApp(firebaseConfig);                
         
-        // ⭕ 큰따옴표(") 오타가 나지 않도록 온전하게 수정되었습니다.
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzhNIrbLZ7k3YrcpiyWma5ojx_yWlBelD90yy5SsjMbkzuV7BcelCKiTN24pYJUSpo/exec";                
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPtGZyjCHfkpHmS-kCrKER4sYYp0vi9LsiQFiRHXr9h9iNvByrf6oLAioyBgW7Vkg/exec";                
         
         let currentAIExplanation = "";         
         let currentMesh;
@@ -177,7 +178,10 @@
         // [기능 3] AI 설계 데이터 연동 및 추출 가드 코드
         // ==========================================        
         async function askAI() {            
-            const userInput = document.getElementById('user-input').value;            
+            const inputEl = document.getElementById('user-input');
+            if(!inputEl) return alert("화면에 입력창이 존재하지 않습니다.");
+            
+            const userInput = inputEl.value;            
             if(!userInput) return alert("AI에게 내릴 설계 명령을 입력하세요!");            
             
             const outputDiv = document.getElementById('ai-output');            
@@ -233,7 +237,7 @@
         }        
 
         // ==========================================        
-        // [기능 5] Cloud Firestore 안전 백업 엔진 (undefined 방어)
+        // [기능 5] Cloud Firestore 안전 백업 엔진
         // ==========================================        
         function saveToFirestore(prompt, shape, radius, height) {            
             const user = firebase.auth().currentUser;            
