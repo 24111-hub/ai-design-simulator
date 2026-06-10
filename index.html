@@ -10,8 +10,6 @@
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
         .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #fafafa; }                
         .viewer-panel { width: 65%; position: relative; background: #1e1e1e; }                
-        
-        /* ⭕ 입력 컴포넌트들이 찌그러지거나 사라지지 않도록 레이아웃 정밀 수정 */
         input, button { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }                
         
         #user-input { 
@@ -49,15 +47,13 @@
     </header>        
     <div class="main-container">                
         <div class="control-panel">                        
-            <h3>🤖 AI 기계 설계 가이더</h3>                        
-            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>                        
-            
-            <textarea id="user-input" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>                        
-            
-            <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>                                    
+            <h3>🤖 AI 기계 설계 가이더 (조립체 버전)</h3>                        
+            <p style="color:#666; font-size:13px; margin:0;">구조적 설계 명령을 내리면 완전하게 조립된 기계 형상이 빌드됩니다.</p>                        
+            <textarea id="user-input" placeholder="예: 알루미늄 합금 재질의 관절형 스마트폰 거치대 조립체 설계해줘"></textarea>                        
+            <button id="btn-generate" onclick="askAI()">AI 설계 및 3D 매핑 시작</button>                                    
             <hr style="width:100%; border: 0; border-top: 1px solid #eee; margin:5px 0;">                                    
             <h4>📋 설계 사양 및 도면 설명</h4>                        
-            <div id="ai-output">설계 명령을 내리면 데이터가 실시간으로 분석됩니다.</div>                        
+            <div id="ai-output">설계 명령을 내리면 완제품 구조가 실시간으로 분석됩니다.</div>                        
             <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 도슨트 설명 듣기 (TTS)</button>                
         </div>                
         <div class="viewer-panel">                        
@@ -66,9 +62,6 @@
         </div>        
     </div>        
     <script>                
-        // ==========================================                
-        // [설정] Firebase 및 Apps Script 연결 정보              
-        // ==========================================                
         const firebaseConfig = {            
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
             authDomain: "project-6180622403440470920.firebaseapp.com",            
@@ -82,21 +75,17 @@
         
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⭕ 꼬임 방지를 위한 완벽 검증된 Apps Script 서버 미들웨어 연동 주소
+        // ⚠️ 본인의 작동하는 최신 구글 웹 앱 URL 주소로 꼭 교체해 주세요!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMaOZbFeIwzR02-sQbX3uO_W3OkF2lHFcksZVipimuvGn-fjLK22-wuqOEhLiIOxOr/exec";                                
         
         let currentAIExplanation = "";                 
-        let currentMesh; 
+        let currentAssembly; 
 
-        // ==========================================                
-        // [기능 1] Firebase Auth 시스템                
-        // ==========================================                
         const provider = new firebase.auth.GoogleAuthProvider();                                
-        
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
             if (!user) {                                
-                firebase.auth().signInWithPopup(provider).catch(e => console.log("팝업 차단 확인"));                        
+                firebase.auth().signInWithPopup(provider).catch(e => console.log("인증 처리 중"));                        
             } else {                                
                 firebase.auth().signOut();                        
             }                
@@ -117,127 +106,147 @@
             }                
         });                
 
-        // ==========================================                
-        // [기능 2] Three.js 다각도 관찰 엔진 설정                
-        // ==========================================                
+        // ==========================================
+        // 3D 뷰어 엔진 및 조립 라이팅 환경 구축
+        // ==========================================
         const container = document.getElementById('canvas-container');                
         const scene = new THREE.Scene();                
-        scene.background = new THREE.Color(0x1e1e1e);                        
-        
+        scene.background = new THREE.Color(0x1a1a1a);                        
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);                
-        camera.position.set(4, 4, 6);                         
-        
+        camera.position.set(5, 5, 8);                         
         const renderer = new THREE.WebGLRenderer({ antialias: true });                
         renderer.setSize(container.clientWidth, container.clientHeight);                
         container.appendChild(renderer.domElement);                        
-        
         const controls = new THREE.OrbitControls(camera, renderer.domElement);                
         controls.enableDamping = true;                 
-        controls.dampingFactor = 0.05;                
-        controls.maxDistance = 15;                     
-        controls.minDistance = 2;                              
+        controls.dampingFactor = 0.05;                        
         
-        const gridHelper = new THREE.GridHelper(10, 20, 0x007bff, 0x444444);                
+        const gridHelper = new THREE.GridHelper(12, 24, 0x007bff, 0x444444);                
         scene.add(gridHelper);                                
-        
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);                
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);                
         scene.add(ambientLight);                
         const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);                
         dirLight1.position.set(5, 10, 7);                
-        scene.add(dirLight1);                
-        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.3);                 
-        dirLight2.position.set(-5, -2, -5);                
-        scene.add(dirLight2);                        
+        scene.add(dirLight1);                        
+        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.4);                
+        dirLight2.position.set(-5, 3, -5);                
+        scene.add(dirLight2);
+
+        // 첫 구동 시 기본 조립 형태 렌더링
+        buildAssembly(1.5, 2.0);                        
         
-        createMachinePart("cylinder", 1, 2);                        
-        
-        function createMachinePart(type, radius, height) {                        
-            if(currentMesh) scene.remove(currentMesh);                        
-            let geometry;                                    
-            if(type === "gear" || type === "ring" || type === "torus") {                                
-                geometry = new THREE.TorusGeometry(radius, radius * 0.3, 16, 100);                        
-            } else if(type === "box" || type === "block") {                                
-                geometry = new THREE.BoxGeometry(radius * 2, height, radius * 2);                        
-            } else {                                
-                geometry = new THREE.CylinderGeometry(radius, radius, height, 32);                        
-            }                                    
-            const material = new THREE.MeshStandardMaterial({                                 
-                color: 0xb0bec5,                                 
-                metalness: 0.8,                                 
-                roughness: 0.2,                                
-                wireframe: false                         
-            });                        
-            currentMesh = new THREE.Mesh(geometry, material);                        
-            currentMesh.position.y = (type === "box" || type === "cylinder") ? height / 2 : radius;                         
-            scene.add(currentMesh);                
+        // ==========================================
+        // 🛠️ 핵심: 다중 파츠 결합 방식의 조립체 빌더 (Assembly Builder)
+        // ==========================================
+        function buildAssembly(scaleWidth, scaleHeight) {                        
+            if(currentAssembly) scene.remove(currentAssembly);                        
+            
+            // 파츠들을 하나로 묶어줄 상위 조립체 그룹 생성
+            currentAssembly = new THREE.Group();
+            
+            // 메탈릭 재질 서피스 정의
+            const metalMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xcccccc, 
+                metalness: 0.9, 
+                roughness: 0.15 
+            });
+            const jointMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x333333, 
+                metalness: 0.7, 
+                roughness: 0.4 
+            });
+
+            // 파츠 1: 바닥 지지판 (Base)
+            const baseGeo = new THREE.BoxGeometry(scaleWidth, 0.1, scaleWidth * 1.2);
+            const baseMesh = new THREE.Mesh(baseGeo, metalMaterial);
+            baseMesh.position.y = 0.05;
+            currentAssembly.add(baseMesh);
+
+            // 파츠 2: 하부 메인 기둥 (Lower Arm)
+            const armHeight = scaleHeight * 0.8;
+            const armGeo = new THREE.CylinderGeometry(0.08, 0.1, armHeight, 16);
+            const armMesh = new THREE.Mesh(armGeo, metalMaterial);
+            armMesh.position.set(0, armHeight / 2 + 0.1, -scaleWidth * 0.2);
+            armMesh.rotation.x = -0.15; // 살짝 앞으로 기울임 디테일
+            currentAssembly.add(armMesh);
+
+            // 파츠 3: 중앙 가동 관절 힌지 (Joint Hinge)
+            const jointGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 16);
+            const jointMesh = new THREE.Mesh(jointGeo, jointMaterial);
+            jointMesh.rotation.z = Math.PI / 2; // 가로 방향 회전
+            jointMesh.position.set(0, armHeight + 0.1, -scaleWidth * 0.3);
+            currentAssembly.add(jointMesh);
+
+            // 파츠 4: 거치 패널 (Holder Plate)
+            const holderGeo = new THREE.BoxGeometry(scaleWidth * 1.1, 0.06, scaleWidth * 1.4);
+            const holderMesh = new THREE.Mesh(holderGeo, metalMaterial);
+            // 힌지 상단에 결합 및 스마트폰 거치 각도(45도) 구현
+            holderMesh.position.set(0, armHeight + 0.5, -scaleWidth * 0.1);
+            holderMesh.rotation.x = 0.6; 
+            currentAssembly.add(holderMesh);
+
+            // 파츠 5: 받침대 하단 고정 받침 (Hooks)
+            const hookGeo = new THREE.BoxGeometry(scaleWidth * 1.1, 0.15, 0.1);
+            const hookMesh = new THREE.Mesh(hookGeo, jointMaterial);
+            hookMesh.position.set(0, armHeight + 0.15, scaleWidth * 0.4);
+            hookMesh.rotation.x = 0.6;
+            currentAssembly.add(hookMesh);
+            
+            // 씬에 조립체 최종 주입
+            scene.add(currentAssembly);        
         }                
 
         function animate() {                        
             requestAnimationFrame(animate);                        
             controls.update();                         
-            if(currentMesh) currentMesh.rotation.y += 0.003;                         
+            if(currentAssembly) currentAssembly.rotation.y += 0.002; // 전체 조립품 회전시킴                     
             renderer.render(scene, camera);                
         }                
         animate();                
 
-        window.addEventListener('resize', () => {                        
-            camera.aspect = container.clientWidth / container.clientHeight;                        
-            camera.updateProjectionMatrix();                        
-            renderer.setSize(container.clientWidth, container.clientHeight);                
-        });                
-
-        // ==========================================                
-        // [기능 3] AI 연동 및 데이터 추출 안전 제어                
-        // ==========================================                
+        // ==========================================
+        // AI 데이터 가드 및 스케일 제어 로직
+        // ==========================================
         async function askAI() {                        
-            const inputEl = document.getElementById('user-input');
-            if(!inputEl) return alert("입력상자 요소를 로드할 수 없습니다.");
-
+            const inputEl = document.getElementById('user-input');                        
             const userInput = inputEl.value;                        
-            if(!userInput) return alert("AI에게 내릴 설계 명령을 입력하세요!");                                    
+            if(!userInput) return alert("설계 요구사항을 입력하세요!");                                    
             
             const outputDiv = document.getElementById('ai-output');                        
-            outputDiv.innerText = "엔지니어의 요구사항을 기반으로 3D 연산 및 사양 도출 중...";                                    
+            outputDiv.innerText = "조립 파츠들의 허용 공차 및 설계 스케일 연산 중...";                                    
             
-            const systemPrompt = `${userInput} -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 말은 일절 배제하고 오직 아래 약속된 JSON 포맷으로만 출력해야 해. { "shapeType": "cylinder" 또는 "gear" 또는 "box", "radius": 추천 반지름, "height": 추천 두께, "description": "특징 설명 한국어 문장" }`;                                    
+            const systemPrompt = `${userInput} -> 이 제품에 필요한 규격을 정의해줘. 결과는 다른 수식어나 설명 없이 오직 하단의 JSON 포맷으로만 출력해야 해. { "width": 추천 가로폭 숫자(1.0~2.5사이), "height": 추천 높이 숫자(1.5~3.0사이), "description": "조립 상태에서의 무게중심과 구조 역학적 장점 설명 문장" }`;                                    
             
             try {                                
                 const response = await fetch(APPS_SCRIPT_URL, {                                        
-                    method: 'POST',                                        
+                    method: 'POST',                    
                     body: JSON.stringify({ prompt: systemPrompt })                                
                 });                                                                
                 
                 let rawText = await response.text();                                
-                console.log("🛠️ AI 원본 데이터 확인:", rawText);                                                
-                
                 rawText = rawText.replace(/```json|```/gi, "").trim();                                
                 const firstOpen = rawText.indexOf('{');                                
                 const lastClose = rawText.lastIndexOf('}');                                
-                if (firstOpen === -1 || lastClose === -1) throw new Error("JSON 파싱 구조 에러");                                
                 rawText = rawText.substring(firstOpen, lastClose + 1);                                                                
                 
                 const aiData = JSON.parse(rawText);                                                
-                const shape = aiData.shapeType || aiData.shape || "cylinder";                                
-                const r = Number(aiData.radius) || 1;                                
-                const h = Number(aiData.height) || 2;                                
-                currentAIExplanation = aiData.description || "설계가 완료되었습니다.";                                                
+                const w = Number(aiData.width) || 1.5;                                
+                const h = Number(aiData.height) || 2.0;                                
+                currentAIExplanation = aiData.description || "완제품 조립 매핑이 완료되었습니다.";                                                
                 
-                createMachinePart(shape, r, h);                                                
+                // 단일 부품이 아닌 완제품 조립 함수 실행
+                buildAssembly(w, h);                                                
                 controls.target.set(0, h/2, 0);                                
                 
-                outputDiv.innerText = `📐 [AI 정밀 설계 도면]\n- 형태 유형: ${shape.toUpperCase()}\n- 주요 직경/반지름: ${r}m\n- 전체 높이/두께: ${h}m\n\n💡 [역학 가이드라인]\n${currentAIExplanation}`;                                                
-                
+                outputDiv.innerText = `📐 [AI 완제품 설계 도면]\n- 조립체 권장 폭: ${w}m\n- 구조체 연장 높이: ${h}m\n\n💡 [구조 해석 가이드]\n${currentAIExplanation}`;                                                
                 speakResult();                                
-                saveToFirestore(userInput, shape, r, h);                        
+                saveToFirestore(userInput, "Assembly_Stand", w, h);                        
             } catch (error) {                                
                 console.error(error);                                
-                outputDiv.innerText = `⚠️ 데이터 연산 과정 중 래핑 예외가 발생했습니다.\n구글 Apps Script에 등록한 본인의 Gemini API Key 유효성을 한 번 더 검증해 주세요.`;                        
+                outputDiv.innerText = `⚠️ 조립 연산 중 에러가 발생했습니다. Apps Script의 Gemini API 키 유효성과 [새 배포] 주소를 다시 한번 체크해 주세요.`;                        
             }                
         }                
 
-        // ==========================================                
-        // [기능 4] TTS 기능                
-        // ==========================================                
         function speakResult() {                        
             if (!currentAIExplanation) return;                                    
             window.speechSynthesis.cancel();                         
@@ -246,26 +255,17 @@
             window.speechSynthesis.speak(utterance);                
         }                
 
-        // ==========================================                
-        // [기능 5] Firebase Firestore 데이터 아카이빙                
-        // ==========================================                
         function saveToFirestore(prompt, shape, radius, height) {                        
             const user = firebase.auth().currentUser;                        
             if (user) {                                
                 firebase.firestore().collection("machinery_blueprints").add({                                        
                     engineerId: user.uid,                                        
                     engineerEmail: user.email,                                        
-                    inputCommand: prompt || "공백 명령",                                        
-                    blueprint: {                                                
-                        shape: shape || "cylinder",                                                
-                        radius: Number(radius) || 1,                                                
-                        height: Number(height) || 2                                        
-                    },                                        
-                    engineeringNote: currentAIExplanation || "공백 가이드",                                        
+                    inputCommand: prompt || "조립체 명령",                                        
+                    blueprint: { shape: shape, radius: Number(radius), height: Number(height) },                                        
+                    engineeringNote: currentAIExplanation || "조립 가이드",                                        
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()                                
-                })                                
-                .then(() => console.log("💾 도면 데이터가 클라우드에 백업되었습니다."))                                
-                .catch(err => console.error("❌ 백업 실패:", err));                        
+                }).catch(err => console.error("❌ 백업 실패:", err));                        
             }                
         }        
     </script>
