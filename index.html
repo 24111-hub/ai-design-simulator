@@ -35,7 +35,7 @@
     <div class="main-container">        
         <div class="control-panel">            
             <h3>🤖 AI 기계 설계 가이더</h3>            
-            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p            
+            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>            
             <textarea id="user-input" rows="3" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>            
             <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>                        
             <hr style="width:100%; border: 0; border-top: 1px solid #eee;">                        
@@ -51,7 +51,7 @@
 
     <script>
         // ==========================================        
-        // [설정] 초기화 정보 선언 (문법 검증 완료)
+        // [설정] Firebase 및 Apps Script 연결 정보 (따옴표 오타 박멸)
         // ==========================================        
         const firebaseConfig = {
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
@@ -66,13 +66,14 @@
         
         firebase.initializeApp(firebaseConfig);                
         
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPtGZyjCHfkpHmS-kCrKER4sYYp0vi9LsiQFiRHXr9h9iNvByrf6oLAioyBgW7Vkg/exec";                
+        // ⭕ 큰따옴표(") 오타가 나지 않도록 온전하게 수정되었습니다.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzhNIrbLZ7k3YrcpiyWma5ojx_yWlBelD90yy5SsjMbkzuV7BcelCKiTN24pYJUSpo/exec";                
         
         let currentAIExplanation = "";         
         let currentMesh;
 
         // ==========================================        
-        // [기능 1] Firebase Auth 로그인 제어 함수
+        // [기능 1] Firebase Auth 로그인 시스템
         // ==========================================        
         const provider = new firebase.auth.GoogleAuthProvider();                
         
@@ -173,7 +174,7 @@
         });        
 
         // ==========================================        
-        // [기능 3] AI 설계 파싱 통신 엔진
+        // [기능 3] AI 설계 데이터 연동 및 추출 가드 코드
         // ==========================================        
         async function askAI() {            
             const userInput = document.getElementById('user-input').value;            
@@ -182,7 +183,7 @@
             const outputDiv = document.getElementById('ai-output');            
             outputDiv.innerText = "엔지니어의 요구사항을 기반으로 3D 연산 및 사양 도출 중...";            
             
-            const systemPrompt = userInput + " -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 설명 텍스트 없이 오직 다음 구조의 JSON 포맷으로만 응답해야 해. { \"shapeType\": \"cylinder\" 또는 \"gear\" 또는 \"box\", \"radius\": 반지름 숫자, \"height\": 높이 숫자, \"description\": \"역학 특징 설명 문장\" }";            
+            const systemPrompt = `${userInput} -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 설명 텍스트 없이 오직 다음 구조의 JSON 포맷으로만 응답해야 해. { "shapeType": "cylinder" 또는 "gear" 또는 "box", "radius": 반지름 숫자, "height": 높이 숫자, "description": "역학 특징 설명 문장" }`;            
             
             try {                
                 const response = await fetch(APPS_SCRIPT_URL, {                    
@@ -209,18 +210,18 @@
                 createMachinePart(shape, r, h);                                
                 controls.target.set(0, h/2, 0);                
                 
-                outputDiv.innerText = "📐 [AI 정밀 설계 도면]\n- 형태 유형: " + shape.toUpperCase() + "\n- 주요 직경/반지름: " + r + "m\n- 전체 높이/두께: " + h + "m\n\n💡 [역학 가이드라인]\n" + currentAIExplanation;                
+                outputDiv.innerText = `📐 [AI 정밀 설계 도면]\n- 형태 유형: ${shape.toUpperCase()}\n- 주요 직경/반지름: ${r}m\n- 전체 높이/두께: ${h}m\n\n💡 [역학 가이드라인]\n${currentAIExplanation}`;                
                 
                 speakResult();                
                 saveToFirestore(userInput, shape, r, h);            
             } catch (error) {                
                 console.error(error);                
-                outputDiv.innerText = "⚠️ 데이터 처리에 오류가 있거나 API가 반환한 규격이 다릅니다.\n이전 단계에서 Apps Script에 진짜 Gemini API 키를 넣고 [새 버전] 배포를 완료했는지 점검해 주세요.";            
+                outputDiv.innerText = "⚠️ 데이터 처리에 오류가 있거나 API가 반환한 규격이 다릅니다.\n이전 단계에서 Apps Script에 진짜 구글 Gemini API 키를 바르게 주입했는지 꼭 한 번 체크해 주세요.";            
             }        
         }        
 
         // ==========================================        
-        // [기능 4] 음성 음향 안내 엔진 (TTS)
+        // [기능 4] 음성 안내 가이드 (TTS)
         // ==========================================        
         function speakResult() {            
             if (!currentAIExplanation) return;                        
@@ -232,7 +233,7 @@
         }        
 
         // ==========================================        
-        // [기능 5] Cloud Firestore 데이터베이스 백업
+        // [기능 5] Cloud Firestore 안전 백업 엔진 (undefined 방어)
         // ==========================================        
         function saveToFirestore(prompt, shape, radius, height) {            
             const user = firebase.auth().currentUser;            
