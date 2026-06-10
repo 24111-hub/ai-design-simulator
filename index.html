@@ -61,17 +61,21 @@
         // ==========================================
         // [설정] Firebase 및 Apps Script 연결 정보
         // ==========================================
-        const firebaseConfig = {
-            apiKey: "YOUR_FIREBASE_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+       const firebaseConfig = {
+       apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
+       authDomain: "project-6180622403440470920.firebaseapp.com",
+       databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",
+       projectId: "project-6180622403440470920",
+       storageBucket: "project-6180622403440470920.firebasestorage.app",
+       messagingSenderId: "626753939152",
+       appId: "1:626753939152:web:485e286ff8e5b596bf20d5",
+       measurementId: "G-QMSFMGJG0J"
+
+};
+
         firebase.initializeApp(firebaseConfig);
         
-        const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPtGZyjCHfkpHmS-kCrKER4sYYpO0vi9LsiQFIrHXr9h9iNvByrF6oLAioyBgW7Vkg/execL";
         
         let currentAIExplanation = ""; 
         let currentMesh; // 화면에 표시 중인 기계 부품 저장용 변수
