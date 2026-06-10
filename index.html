@@ -1,66 +1,56 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 기반 3D 기계 설계 다각도 시뮬레이터</title>
-    
-    <style>
-        body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }
-        .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #fafafa; }
-        .viewer-panel { width: 65%; position: relative; background: #1e1e1e; }
-        input, button, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; }
-        textarea { resize: none; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { background: #0056b3; }
-        #ai-output { background: #ffffff; padding: 15px; border-left: 5px solid #007bff; border-radius: 4px; min-height: 120px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
-        #canvas-container { width: 100%; height: 100%; }
-        .viewer-hint { position: absolute; top: 10px; right: 10px; color: #aaa; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; }
-    </style>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<!DOCTYPE html><html lang="ko"><head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>AI 기반 3D 기계 설계 다각도 시뮬레이터</title>        
+    <style>        
+        body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }        
+        header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }        
+        .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }        
+        .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #fafafa; }        
+        .viewer-panel { width: 65%; position: relative; background: #1e1e1e; }        
+        input, button, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; }        
+        textarea { resize: none; }        
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }        
+        button:hover { background: #0056b3; }        
+        #ai-output { background: #ffffff; padding: 15px; border-left: 5px solid #007bff; border-radius: 4px; min-height: 120px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }        
+        #canvas-container { width: 100%; height: 100%; }        
+        .viewer-hint { position: absolute; top: 10px; right: 10px; color: #aaa; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; }    
+    </style>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
-<body>
+<body>    
+    <header>        
+        <h2>⚙️ AI Mechanical 3D Design Studio</h2>        
+        <div>            
+            <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>            
+            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>        
+        </div>    
+    </header>    
+    <div class="main-container">        
+        <div class="control-panel">            
+            <h3>🤖 AI 기계 설계 가이더</h3>            
+            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>            
+            <textarea id="user-input" rows="3" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>            
+            <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>                        
+            <hr style="width:100%; border: 0; border-top: 1px solid #eee;">                        
+            <h4>📋 설계 사양 및 도면 설명</h4>            
+            <div id="ai-output">설계 명령을 내리면 데이터가 실시간으로 분석됩니다.</div>            
+            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 도슨트 설명 듣기 (TTS)</button>        
+        </div>        
+        <div class="viewer-panel">            
+            <div class="viewer-hint">🖱️ 좌클릭: 회전 | 우클릭: 이동 | 휠: 확대/축소</div>            
+            <div id="canvas-container"></div>        
+        </div>    
+    </div>    
 
-    <header>
-        <h2>⚙️ AI Mechanical 3D Design Studio</h2>
-        <div>
-            <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>
-            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>
-        </div>
-    </header>
-
-    <div class="main-container">
-        <div class="control-panel">
-            <h3>🤖 AI 기계 설계 가이더</h3>
-            <p style="color:#666; font-size:13px; margin:0;">원하는 부품 이름과 특징을 말하면 AI가 형태를 결정합니다.</p>
-            <textarea id="user-input" rows="3" placeholder="예: 회전축에 들어갈 두껍고 납작한 기어 부품 설계해줘"></textarea>
-            <button id="btn-generate" onclick="askAI()" disabled>AI 설계 및 3D 매핑 시작</button>
-            
-            <hr style="width:100%; border: 0; border-top: 1px solid #eee;">
-            
-            <h4>📋 설계 사양 및 도면 설명</h4>
-            <div id="ai-output">설계 명령을 내리면 데이터가 실시간으로 분석됩니다.</div>
-            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 도슨트 설명 듣기 (TTS)</button>
-        </div>
-
-        <div class="viewer-panel">
-            <div class="viewer-hint">🖱️ 좌클릭: 회전 | 우클릭: 이동 | 휠: 확대/축소</div>
-            <div id="canvas-container"></div>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // [설정] Firebase 및 Apps Script 연결 정보
-        // ==========================================
+    <script>        
+        // ==========================================        
+        // [설정] Firebase 및 Apps Script 연결 정보 (검증 완료된 정보)      
+        // ==========================================        
         const firebaseConfig = {
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
             authDomain: "project-6180622403440470920.firebaseapp.com",
@@ -70,232 +60,202 @@
             messagingSenderId: "626753939152",
             appId: "1:626753939152:web:485e286ff8e5b596bf20d5",
             measurementId: "G-QMSFMGJG0J"
-            };
-
-
-
-        firebase.initializeApp(firebaseConfig);
+        };        
+        firebase.initializeApp(firebaseConfig);                
         
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzhNIrbLZ7k3YrcpiyWma5ojx_yWlBelD90yy5SsjMbkzuV7BcelCKiTN24pYJUSpo/exec";
+        // 💡 주의: 뒤에 대문자 L 등 오타가 안 붙었는지 주소를 꼭 한 번 더 직접 확인하세요!
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPtGZyjCHfkpHmS-kCrKER4sYYp0vi9LsiQFiRHXr9h9iNvByrf6oLAioyBgW7Vkg/exec";                
         
-        let currentAIExplanation = ""; 
-        let currentMesh; // 화면에 표시 중인 기계 부품 저장용 변수
+        let currentAIExplanation = "";         
+        let currentMesh; // 화면에 표시 중인 기계 부품 저장용 변수        
 
-        // ==========================================
-        // [기능 1] Firebase Auth 시스템
-        // ==========================================
-        const provider = new firebase.auth.GoogleAuthProvider();
+        // ==========================================        
+        // [기능 1] Firebase Auth 시스템        
+        // ==========================================        
+        const provider = new firebase.auth.GoogleAuthProvider();                
         
-        function toggleLogin() {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                firebase.auth().signInWithPopup(provider);
-            } else {
-                firebase.auth().signOut();
-            }
-        }
+        function toggleLogin() {            
+            const user = firebase.auth().currentUser;            
+            if (!user) {                
+                firebase.auth().signInWithPopup(provider);            
+            } else {                
+                firebase.auth().signOut();            
+            }        
+        }        
 
-        firebase.auth().onAuthStateChanged((user) => {
-            const statusText = document.getElementById('user-status');
-            const loginBtn = document.getElementById('btn-login');
-            const generateBtn = document.getElementById('btn-generate');
+        firebase.auth().onAuthStateChanged((user) => {            
+            const statusText = document.getElementById('user-status');            
+            const loginBtn = document.getElementById('btn-login');            
+            const generateBtn = document.getElementById('btn-generate');            
+            if (user) {                
+                statusText.innerText = `👤 ${user.displayName} 엔지니어`;                
+                loginBtn.innerText = "로그아웃";                
+                generateBtn.disabled = false;            
+            } else {                
+                statusText.innerText = "로그인이 필요합니다.";                
+                loginBtn.innerText = "구글 로그인";                
+                generateBtn.disabled = true;            
+            }        
+        });        
 
-            if (user) {
-                statusText.innerText = `👤 ${user.displayName} 엔지니어`;
-                loginBtn.innerText = "로그아웃";
-                generateBtn.disabled = false;
-            } else {
-                statusText.innerText = "로그인이 필요합니다.";
-                loginBtn.innerText = "구글 로그인";
-                generateBtn.disabled = true;
-            }
-        });
-
-        // ==========================================
-        // [기능 2] Three.js 다각도 관찰 엔진 설정
-        // ==========================================
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1e1e1e);
-
-        // 카메라 생성
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(4, 4, 6); // 대각선 위에서 내려다보는 구도
-
-        // 렌더러 생성
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-
-        // ★핵심: 마우스 다각도 조작(OrbitControls) 활성화
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // 부드러운 움직임 효과
-        controls.dampingFactor = 0.05;
-        controls.maxDistance = 15;     // 너무 멀어지지 않게 제한
-        controls.minDistance = 2;      // 너무 가까워지지 않게 제한
-
-        // 설계실 느낌을 주는 그리드(바닥 격자판)와 축 가이드라인 추가
-        const gridHelper = new THREE.GridHelper(10, 20, 0x007bff, 0x444444);
-        scene.add(gridHelper);
+        // ==========================================        
+        // [기능 2] Three.js 다각도 관찰 엔진 설정        
+        // ==========================================        
+        const container = document.getElementById('canvas-container');        
+        const scene = new THREE.Scene();        
+        scene.background = new THREE.Color(0x1e1e1e);        
         
-        // 조명 시스템 (기계 재질이 반짝이도록 셋팅)
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight1.position.set(5, 10, 7);
-        scene.add(dirLight1);
-        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.3); // 푸른빛 반사광
-        dirLight2.position.set(-5, -2, -5);
-        scene.add(dirLight2);
-
-        // 초기 기본 부품 (샤프트/축 모양으로 시작)
-        createMachinePart("cylinder", 1, 2);
-
-        // 3D 모델을 새로 생성하는 기능
-        function createMachinePart(type, radius, height) {
-            // 기존 부품이 있다면 씬에서 제거하여 메모리 확보
-            if(currentMesh) scene.add && scene.remove(currentMesh);
-
-            let geometry;
-            // AI의 부품 타입 판단에 따라 동적으로 메쉬 입체 도형 변경
-            if(type === "gear" || type === "ring") {
-                // 도넛/기어 모양 기본 베이스
-                geometry = new THREE.TorusGeometry(radius, radius * 0.3, 16, 100);
-            } else if(type === "box" || type === "block") {
-                // 사각 블록 기계 부품
-                geometry = new THREE.BoxGeometry(radius * 2, height, radius * 2);
-            } else {
-                // 실린더/축/파이프 모양 기본 베이스
-                geometry = new THREE.CylinderGeometry(radius, radius, height, 32);
-            }
-
-            // 기계 금속(Metal) 느낌의 고급 재질 설계
-            const material = new THREE.MeshStandardMaterial({ 
-                color: 0xb0bec5, 
-                metalness: 0.8, 
-                roughness: 0.2,
-                wireframe: false 
-            });
-
-            currentMesh = new THREE.Mesh(geometry, material);
-            currentMesh.position.y = (type === "box" || type === "cylinder") ? height / 2 : radius; // 바닥 격자 위에 배치
-            scene.add(currentMesh);
-        }
-
-        // 애니메이션 작동 루프
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update(); // 마우스 조작값 실시간 반영
-            if(currentMesh) currentMesh.rotation.y += 0.003; // 은은한 자동 회전 효과
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-
-        // ==========================================
-        // [기능 3] AI 연동 및 데이터 추출
-        // ==========================================
-        async function askAI() {
-            const userInput = document.getElementById('user-input').value;
-            if(!userInput) return alert("AI에게 내릴 설계 명령을 입력하세요!");
-
-            const outputDiv = document.getElementById('ai-output');
-            outputDiv.innerText = "엔지니어의 요구사항을 기반으로 3D 연산 및 사양 도출 중...";
-
-            // AI에게 모형 형태(shapeType)까지 정해달라고 확장 프롬프팅 지시
-            const systemPrompt = `${userInput} -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 말은 일절 배제하고 오직 아래 약속된 JSON 포맷으로만 출력해야 해.
-            { 
-              "shapeType": "cylinder" 또는 "gear" 또는 "box" 중 어울리는 것 하나 선택, 
-              "radius": 추천하는 반지름 숫자 (0.5 ~ 2.5 사이), 
-              "height": 추천하는 높이나 두께 숫자 (0.2 ~ 3.5 사이), 
-              "description": "이 기계 부품이 요구사항에 왜 적합하며, 어떤 역학적 특징을 가지는지 설명하는 친절한 한국어 문장" 
-            }`;
-
-            try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ prompt: systemPrompt })
-                });
-                
-                let rawText = await response.text();
-                console.log("🛠️ AI 원본 데이터 확인:", rawText);
-
-                // JSON 찌꺼기 정제 가공
-                rawText = rawText.replace(/```json|```/gi, "").trim();
-                const firstOpen = rawText.indexOf('{');
-                const lastClose = rawText.lastIndexOf('}');
-                if (firstOpen === -1 || lastClose === -1) throw new Error("JSON 파싱 에러");
-                rawText = rawText.substring(firstOpen, lastClose + 1);
-                
-                const aiData = JSON.parse(rawText);
-
-                // 안전장치 구동
-                const shape = aiData.shapeType || "cylinder";
-                const r = Number(aiData.radius) || 1;
-                const h = Number(aiData.height) || 2;
-                currentAIExplanation = aiData.description || "설계가 완료되었습니다.";
-
-                // 1. [3D 모델 동적 변경 기법 적용] 형태와 크기를 통째로 바꿈
-                createMachinePart(shape, r, h);
-                
-                // 2. 카메라 초점을 새로 만들어진 부품 중심으로 이동
-                controls.target.set(0, h/2, 0);
-
-                // 3. 화면 UI 갱신
-                outputDiv.innerText = `📐 [AI 정밀 설계 도면]\n- 형태 유형: ${shape.toUpperCase()}\n- 주요 직경/반지름: ${r}m\n- 전체 높이/두께: ${h}m\n\n💡 [역학 가이드라인]\n${currentAIExplanation}`;
-
-                // 4. TTS 보이스 큐 실행
-                speakResult();
-
-                // 5. Firebase 아카이브 저장
-                saveToFirestore(userInput, aiData);
-
-            } catch (error) {
-                console.error(error);
-                outputDiv.innerText = `⚠️ 3D 설계 도중 데이터 어긋남이 발생했습니다.\n다시 한 번 명령을 입력해보거나 Apps Script 설정을 점검해주세요.`;
-            }
-        }
-
-        // ==========================================
-        // [기능 4] TTS 기능 (Web Speech API)
-        // ==========================================
-        function speakResult() {
-            if (!currentAIExplanation) return alert("출력된 설계 도슨트 가이드가 없습니다.");
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);        
+        camera.position.set(4, 4, 6);         
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });        
+        renderer.setSize(container.clientWidth, container.clientHeight);        
+        container.appendChild(renderer.domElement);        
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);        
+        controls.enableDamping = true;         
+        controls.dampingFactor = 0.05;        
+        controls.maxDistance = 15;             
+        controls.minDistance = 2;              
+        
+        const gridHelper = new THREE.GridHelper(10, 20, 0x007bff, 0x444444);        
+        scene.add(gridHelper);                
+        
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);        
+        scene.add(ambientLight);        
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);        
+        dirLight1.position.set(5, 10, 7);        
+        scene.add(dirLight1);        
+        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.3);         
+        dirLight2.position.set(-5, -2, -5);        
+        scene.add(dirLight2);        
+        
+        // 초기 기본 부품 모양 로드
+        createMachinePart("cylinder", 1, 2);        
+        
+        function createMachinePart(type, radius, height) {            
+            if(currentMesh) scene.remove(currentMesh);            
+            let geometry;            
             
-            window.speechSynthesis.cancel(); 
-            const utterance = new SpeechSynthesisUtterance(currentAIExplanation);
-            utterance.lang = 'ko-KR';
-            utterance.rate = 1.0; 
-            window.speechSynthesis.speak(utterance);
-        }
+            if(type === "gear" || type === "ring" || type === "torus") {                
+                geometry = new THREE.TorusGeometry(radius, radius * 0.3, 16, 100);            
+            } else if(type === "box" || type === "block") {                
+                geometry = new THREE.BoxGeometry(radius * 2, height, radius * 2);            
+            } else {                
+                geometry = new THREE.CylinderGeometry(radius, radius, height, 32);            
+            }            
+            
+            const material = new THREE.MeshStandardMaterial({                 
+                color: 0xb0bec5,                 
+                metalness: 0.8,                 
+                roughness: 0.2,                
+                wireframe: false             
+            });            
+            currentMesh = new THREE.Mesh(geometry, material);            
+            currentMesh.position.y = (type === "box" || type === "cylinder") ? height / 2 : radius;             
+            scene.add(currentMesh);        
+        }        
 
-        // ==========================================
-        // [기능 5] Firebase Firestore 데이터 아카이빙
-        // ==========================================
-        function saveToFirestore(prompt, aiData) {
-            const user = firebase.auth().currentUser;
-            if (user) {
-                firebase.firestore().collection("machinery_blueprints").add({
-                    engineerId: user.uid,
-                    engineerEmail: user.email,
-                    inputCommand: prompt,
-                    blueprint: {
-                        shape: aiData.shapeType,
-                        radius: Number(aiData.radius),
-                        height: Number(aiData.height)
-                    },
-                    engineeringNote: aiData.description,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => console.log("💾 도면 데이터가 성공적으로 클라우드 서버에 백업되었습니다."))
-                .catch(err => console.error("❌ 백업 실패:", err));
-            }
-        }
+        function animate() {            
+            requestAnimationFrame(animate);            
+            controls.update();             
+            if(currentMesh) currentMesh.rotation.y += 0.003;             
+            renderer.render(scene, camera);        
+        }        
+        animate();        
+
+        window.addEventListener('resize', () => {            
+            camera.aspect = container.clientWidth / container.clientHeight;            
+            camera.updateProjectionMatrix();            
+            renderer.setSize(container.clientWidth, container.clientHeight);        
+        });        
+
+        // ==========================================        
+        // [기능 3] AI 연동 및 데이터 추출 (안전 예외 처리 강화)        
+        // ==========================================        
+        async function askAI() {            
+            const userInput = document.getElementById('user-input').value;            
+            if(!userInput) return alert("AI에게 내릴 설계 명령을 입력하세요!");            
+            
+            const outputDiv = document.getElementById('ai-output');            
+            outputDiv.innerText = "엔지니어의 요구사항을 기반으로 3D 연산 및 사양 도출 중...";            
+            
+            const systemPrompt = `${userInput} -> 이 요구사항에 가장 어울리는 기계 형상을 규격화해줘. 결과는 다른 말은 일절 배제하고 오직 아래 약속된 JSON 포맷으로만 출력해야 해.            {               "shapeType": "cylinder" 또는 "gear" 또는 "box" 중 어울리는 것 하나 선택,               "radius": 추천하는 반지름 숫자 (0.5 ~ 2.5 사이),               "height": 추천하는 높이나 두께 숫자 (0.2 ~ 3.5 사이),               "description": "이 기계 부품이 요구사항에 왜 적합하며, 어떤 역학적 특징을 가지는지 설명하는 친절한 한국어 문장"             }`;            
+            
+            try {                
+                const response = await fetch(APPS_SCRIPT_URL, {                    
+                    method: 'POST',                    
+                    body: JSON.stringify({ prompt: systemPrompt })                
+                });                                
+                
+                let rawText = await response.text();                
+                console.log("🛠️ AI 원본 데이터 확인:", rawText);                
+                
+                rawText = rawText.replace(/```json|```/gi, "").trim();                
+                const firstOpen = rawText.indexOf('{');                
+                const lastClose = rawText.lastIndexOf('}');                
+                if (firstOpen === -1 || lastClose === -1) throw new Error("JSON 파싱 에러");                
+                rawText = rawText.substring(firstOpen, lastClose + 1);                                
+                
+                const aiData = JSON.parse(rawText);                
+                
+                // 💡 [안전장치] 어떤 키명으로 와도 undefined 에러가 나지 않도록 유연하게 파싱
+                const shape = aiData.shapeType || aiData.shape || "cylinder";                
+                const r = Number(aiData.radius) || 1;                
+                const h = Number(aiData.height) || 2;                
+                currentAIExplanation = aiData.description || "설계가 성공적으로 완료되었습니다.";                
+                
+                // 1. 3D 모델 실시간 업데이트
+                createMachinePart(shape, r, h);                                
+                // 2. 카메라 시점 재설정
+                controls.target.set(0, h/2, 0);                
+                // 3. UI 텍스트 출력
+                outputDiv.innerText = `📐 [AI 정밀 설계 도면]\n- 형태 유형: ${shape.toUpperCase()}\n- 주요 직경/반지름: ${r}m\n- 전체 높이/두께: ${h}m\n\n💡 [역학 가이드라인]\n${currentAIExplanation}`;                
+                
+                // 4. TTS 실행                
+                speakResult();                
+                
+                // 5. Firebase 아카이브 백업 (빈 데이터 에러 원천 차단)                
+                saveToFirestore(userInput, shape, r, h);            
+            } catch (error) {                
+                console.error(error);                
+                outputDiv.innerText = `⚠️ 3D 설계 도중 데이터 어긋남이 발생했습니다.\n다시 한 번 명령을 입력해보거나 Apps Script 주소를 확인해주세요.`;            
+            }        
+        }        
+
+        // ==========================================        
+        // [기능 4] TTS 기능        
+        // ==========================================        
+        function speakResult() {            
+            if (!currentAIExplanation) return alert("출력된 설계 도슨트 가이드가 없습니다.");                        
+            window.speechSynthesis.cancel();             
+            const utterance = new SpeechSynthesisUtterance(currentAIExplanation);            
+            utterance.lang = 'ko-KR';            
+            utterance.rate = 1.0;             
+            window.speechSynthesis.speak(utterance);        
+        }        
+
+        // ==========================================        
+        // [기능 5] Firebase Firestore 데이터 아카이빙 (undefined 완전 보완 방어형 코드)        
+        // ==========================================        
+        function saveToFirestore(prompt, shape, radius, height) {            
+            const user = firebase.auth().currentUser;            
+            if (user) {                
+                firebase.firestore().collection("machinery_blueprints").add({                    
+                    engineerId: user.uid,                    
+                    engineerEmail: user.email,                    
+                    inputCommand: prompt || "명령 텍스트 공백",                    
+                    blueprint: {                        
+                        shape: shape || "cylinder",                        
+                        radius: Number(radius) || 1,                        
+                        height: Number(height) || 2                    
+                    },                    
+                    engineeringNote: currentAIExplanation || "분석 가이드라인 공백",                    
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()                
+                })                
+                .then(() => console.log("💾 도면 데이터가 성공적으로 클라우드 서버에 백업되었습니다."))                
+                .catch(err => console.error("❌ 백업 실패:", err));            
+            }        
+        }    
     </script>
-</body>
-</html>
+</body></html>
