@@ -3,33 +3,28 @@
 <head>        
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 기반 비정형 기계 구조 자율 조립 시뮬레이터</title>            
+    <title>정밀 AI 기계 구조 자율 CAD 시뮬레이터</title>            
     <style>                
         body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }                
-        header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }                
+        header { background: #1a1a1a; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border-bottom: 2px solid #007bff; }                
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
-        .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #fafafa; }                
-        .viewer-panel { width: 65%; position: relative; background: #1e1e1e; }                
-        input, button { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }                
+        .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #222225; color: #eee; }                
+        .viewer-panel { width: 65%; position: relative; background: #111113; }                
+        textarea, button { padding: 12px; font-size: 15px; border-radius: 6px; box-sizing: border-box; width: 100%; }                
         
         #user-input { 
-            width: 100%; 
             min-height: 90px; 
-            padding: 12px; 
-            font-size: 15px; 
-            border-radius: 6px; 
-            border: 1px solid #ddd; 
-            box-sizing: border-box; 
+            border: 1px solid #444; 
+            background: #2e2e32;
+            color: #fff;
             resize: none;
-            background: #ffffff;
-            display: block;
         }
         
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; display: block; }                
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }                
         button:hover { background: #0056b3; }                
-        #ai-output { background: #ffffff; padding: 15px; border-left: 5px solid #007bff; border-radius: 4px; min-height: 140px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }                
+        #ai-output { background: #2e2e32; padding: 15px; border-left: 5px solid #007bff; border-radius: 4px; min-height: 140px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #ddd; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }                
         #canvas-container { width: 100%; height: 100%; }                
-        .viewer-hint { position: absolute; top: 10px; right: 10px; color: #aaa; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; }        
+        .viewer-hint { position: absolute; top: 10px; right: 10px; color: #aaa; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; border: 1px solid #444; }        
     </style>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
@@ -39,7 +34,7 @@
 </head>
 <body>        
     <header>                
-        <h2>⚙️ ChatGPT Generative 3D Assembly Studio</h2>                
+        <h2>⚙️ AI Generative Precision CAD Studio</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>                        
             <button id="btn-login" onclick="toggleLogin()" style="width:auto; display:inline-block; padding:8px 15px;">구글 로그인</button>                
@@ -47,14 +42,14 @@
     </header>        
     <div class="main-container">                
         <div class="control-panel">                        
-            <h3>🤖 자율적 AI 메커니즘 설계기</h3>                        
-            <p style="color:#666; font-size:13px; margin:0;">AI가 정형화된 틀 없이 부품들의 배치와 좌표를 완전히 새로 설계합니다.</p>                        
-            <textarea id="user-input" placeholder="예: '나사산 기둥이 포함된 유압식 프레스 실린더 조립체 설계해줘'"></textarea>                        
-            <button id="btn-generate" onclick="askAI()">AI 자유 설계 및 렌더링 시작</button>                                    
-            <hr style="width:100%; border: 0; border-top: 1px solid #eee; margin:5px 0;">                                    
-            <h4>📋 매핑된 실시간 구조 분석 정보</h4>                        
-            <div id="ai-output">설계 명령을 내리면 AI가 실시간으로 창조한 3D 가이드라인이 매핑됩니다.</div>                        
-            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 구조 가이드 듣기 (TTS)</button>                
+            <h3>🤖 고정밀 메커니즘 연산기</h3>                        
+            <p style="color:#aaa; font-size:13px; margin:0;">AI가 특수 파츠(나선 구조, 기어 등)를 수학적 파라미터로 실시간 가공합니다.</p>                        
+            <textarea id="user-input" placeholder="예: '나선 홈이 파진 정밀 원뿔 샤프트와 맞물리는 메인 기어 설계해줘'"></textarea>                        
+            <button id="btn-generate" onclick="askAI()">정밀 CAD 자율 설계 시작</button>                                    
+            <hr style="width:100%; border: 0; border-top: 1px solid #333; margin:5px 0;">                                    
+            <h4>📋 역학 설계 및 파츠 정보</h4>                        
+            <div id="ai-output">명령을 내리면 단순 블록이 아닌 기계 요소가 렌더링됩니다.</div>                        
+            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 구조 분석 가이드 듣기</button>                
         </div>                
         <div class="viewer-panel">                        
             <div class="viewer-hint">🖱️ 좌클릭: 회전 | 우클릭: 이동 | 휠: 확대/축소</div>                        
@@ -75,7 +70,7 @@
         
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 현재 정상 작동 중인 본인의 구글 웹 앱 URL 주소를 꼭 다시 붙여넣어 주세요!
+        // ⚠️ 작동 확인하셨던 구글 웹 앱 URL 주소를 넣어주세요.
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzBR1KlVrNteBYGpW0JqjygWgqdabKppWtdiKukpvU8lgjaMBUZD6PUvNdAwoY6E17/exec";                                
         
         let currentAIExplanation = "";                 
@@ -96,7 +91,7 @@
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
             if (user) {                
-                statusText.innerText = `👤 ${user.displayName} 엔지니어`;                
+                statusText.innerText = `👤 ${user.displayName}`;                
                 loginBtn.innerText = "로그아웃";                
                 generateBtn.disabled = false;            
             } else {                
@@ -106,10 +101,9 @@
             }        
         });                
 
-        // 3D 환경 정의
         const container = document.getElementById('canvas-container');                
         const scene = new THREE.Scene();                
-        scene.background = new THREE.Color(0x15161a);                        
+        scene.background = new THREE.Color(0x111115);                        
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);                
         camera.position.set(4, 4, 6);                         
         const renderer = new THREE.WebGLRenderer({ antialias: true });                
@@ -119,74 +113,120 @@
         controls.enableDamping = true;                 
         controls.dampingFactor = 0.05;                        
         
-        const gridHelper = new THREE.GridHelper(16, 32, 0x007bff, 0x2d3038);                
+        const gridHelper = new THREE.GridHelper(16, 32, 0x007bff, 0x333338);                
         scene.add(gridHelper);                                
         
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);                
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);                
         scene.add(ambientLight);                
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);                
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);                
         dirLight1.position.set(5, 10, 7);                
         scene.add(dirLight1);                        
+        const dirLight2 = new THREE.DirectionalLight(0x007bff, 0.4); // 엔지니어링 느낌을 위한 블루 서브광
+        dirLight2.position.set(-5, 2, -5);                
+        scene.add(dirLight2);
 
-        // 초기 화면 웰컴 구조
+        // 초기 화면 (웰컴 나선 기계 구조 부품 배치)
         const defaultBlueprint = [
-            { type: "box", w: 1.2, h: 0.1, d: 1.2, x: 0, y: 0.05, z: 0, color: "0x4f5d75" },
-            { type: "cylinder", rTop: 0.3, rBot: 0.3, h: 1.0, x: 0, y: 0.6, z: 0, color: "0xd1d5db" },
-            { type: "cone", r: 0.4, h: 0.6, x: 0, y: 1.4, z: 0, color: "0xef8354" }
+            { type: "box", w: 1.5, h: 0.1, d: 1.5, x: 0, y: 0.05, z: 0, color: "0x2c3e50" },
+            { type: "screw", r: 0.15, h: 1.2, turns: 8, t: 0.04, x: 0, y: 0.1, z: 0, color: "0xbdc3c7" },
+            { type: "gear", r: 0.5, h: 0.15, teeth: 16, x: 0, y: 0.7, z: 0, color: "0xd35400" }
         ];
         renderAIAssembly(defaultBlueprint);                        
         
         // ==========================================
-        // 🛠️ 개선된 동적 형상 생성기 (원뿔 및 정밀 비례 최적화)
+        // 🔥 하이라이트: 장난감 블록 탈출 정밀 가공 엔진
         // ==========================================
         function renderAIAssembly(partsArray) {                        
             if(currentAssembly) scene.remove(currentAssembly);                        
-            
             currentAssembly = new THREE.Group();
             
             partsArray.forEach(p => {
                 let geometry;
                 const type = String(p.type).toLowerCase();
                 
-                // 각 수치값이 누락되었거나 너무 작게 오면 보정해주는 디펜스 로직 적용
-                const w = Math.max(Number(p.w) || 0.4, 0.1);
-                const h = Math.max(Number(p.h) || 0.4, 0.1);
-                const d = Math.max(Number(p.d) || 0.4, 0.1);
-                const r = Math.max(Number(p.r) || 0.3, 0.05);
-                const rTop = Math.max(Number(p.rTop) || 0.2, 0.01);
-                const rBot = Math.max(Number(p.rBot) || 0.2, 0.01);
-                const t = Math.max(Number(p.t) || 0.08, 0.02);
+                const w = Number(p.w) || 0.5;
+                const h = Number(p.h) || 0.5;
+                const d = Number(p.d) || 0.5;
+                const r = Number(p.r) || 0.3;
+                const rTop = Number(p.rTop) || 0.2;
+                const rBot = Number(p.rBot) || 0.2;
 
-                if (type === "box" || type === "cube") {
+                // 1. 진짜 톱니가 살아있는 기어(Gear) 모델링
+                if (type === "gear") {
+                    const teeth = p.teeth || 12;
+                    const gearShape = new THREE.Shape();
+                    const outerRad = r;
+                    const innerRad = r * 0.75;
+                    
+                    for (let i = 0; i < teeth * 2; i++) {
+                        const angle = (i / (teeth * 2)) * Math.PI * 2;
+                        const rad = i % 2 === 0 ? outerRad : innerRad;
+                        const x = Math.cos(angle) * rad;
+                        const z = Math.sin(angle) * rad;
+                        if (i === 0) gearShape.moveTo(x, z);
+                        else gearShape.lineTo(x, z);
+                    }
+                    gearShape.closePath();
+                    
+                    // 기어 중앙에 축 구멍 뚫기 (진짜 CAD 가공)
+                    const holePath = new THREE.Path();
+                    holePath.absarc(0, 0, r * 0.2, 0, Math.PI * 2, true);
+                    gearShape.holes.push(holePath);
+
+                    geometry = new THREE.ExtrudeGeometry(gearShape, { depth: h, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.01 });
+                    geometry.rotateX(Math.PI / 2); // 축 정렬 보정
+                } 
+                // 2. 수학적 나사산 곡선을 꼬아 가공하는 나선(Screw/Thread) 모델링
+                else if (type === "screw" || type === "thread") {
+                    const points = [];
+                    const turns = p.turns || 6;
+                    const totalPoints = 150;
+                    
+                    for (let i = 0; i < totalPoints; i++) {
+                        const pct = i / totalPoints;
+                        const angle = pct * Math.PI * 2 * turns;
+                        // 만약 사용자가 원뿔 나선(Cone Screw)을 원하면 반지름이 점점 줄어들도록 수학적 설계
+                        const currentRadius = r * (1 - pct * 0.6); 
+                        const sx = Math.cos(angle) * currentRadius;
+                        const sy = pct * h;
+                        const sz = Math.sin(angle) * currentRadius;
+                        points.push(new THREE.Vector3(sx, sy, sz));
+                    }
+                    const path = new THREE.CatmullRomCurve3(points);
+                    geometry = new THREE.TubeGeometry(path, 100, p.t || 0.04, 12, false);
+                }
+                // 3. 기존 원형 기본 부품 디펜딩 가공
+                else if (type === "box") {
                     geometry = new THREE.BoxGeometry(w, h, d);
                 } else if (type === "cylinder") {
                     geometry = new THREE.CylinderGeometry(rTop, rBot, h, 32);
                 } else if (type === "cone") {
-                    // 🎉 드디어 원뿔형태 완벽 생성 지원! (반지름, 높이, 세그먼트수)
                     geometry = new THREE.ConeGeometry(r, h, 32);
-                } else if (type === "torus" || type === "ring") {
-                    geometry = new THREE.TorusGeometry(r, t, 12, 36);
-                    geometry.rotateX(Math.PI / 2); // 링이 바닥을 바라보도록 정렬 예외 보정
                 } else {
-                    geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+                    geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
                 }
                 
-                const partColor = p.color ? parseInt(p.color.replace("#", ""), 16) : 0x95a5a6;
+                const partColor = p.color ? parseInt(p.color.replace("#", ""), 16) : 0x7f8c8d;
+                
+                // 고급 메탈 및 메카닉 질감 부여
                 const material = new THREE.MeshStandardMaterial({ 
                     color: partColor, 
-                    metalness: 0.7, 
-                    roughness: 0.3 
+                    metalness: 0.9, 
+                    roughness: 0.15 
                 });
                 
                 const mesh = new THREE.Mesh(geometry, material);
-                
-                // 위치값 안착
                 mesh.position.set(Number(p.x)||0, Number(p.y)||0, Number(p.z)||0);
                 
-                // 회전 각도값 매핑
                 if(p.rotX) mesh.rotation.x = Number(p.rotX);
                 if(p.rotY) mesh.rotation.y = Number(p.rotY);
                 if(p.rotZ) mesh.rotation.z = Number(p.rotZ);
+                
+                // 도면 테두리 선(Wireframe Edge)을 강제로 입혀 CAD 감성 가시성 극대화
+                const edges = new THREE.EdgesGeometry(geometry);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 1, transparent: true, opacity: 0.15 });
+                const line = new THREE.LineSegments(edges, lineMat);
+                mesh.add(line);
                 
                 currentAssembly.add(mesh);
             });
@@ -197,7 +237,7 @@
         function animate() {                        
             requestAnimationFrame(animate);                        
             controls.update();                         
-            if(currentAssembly) currentAssembly.rotation.y += 0.002;                     
+            if(currentAssembly) currentAssembly.rotation.y += 0.0015;                     
             renderer.render(scene, camera);                
         }                
         animate();                
@@ -205,10 +245,10 @@
         async function askAI() {                        
             const inputEl = document.getElementById('user-input');                        
             const userInput = inputEl.value;                        
-            if(!userInput) return alert("원하는 기계 및 구조의 특징을 입력하세요!");                                    
+            if(!userInput) return alert("설계할 정밀 메커니즘을 입력하세요!");                                    
             
             const outputDiv = document.getElementById('ai-output');                        
-            outputDiv.innerText = "사용자 요구사항을 가공할 형상 모델링 연산 중...";                                    
+            outputDiv.innerText = "ChatGPT 정밀 CAD 데이터 매핑 연산 중...";                                    
             
             try {                                
                 const response = await fetch(APPS_SCRIPT_URL, {                                        
@@ -221,22 +261,22 @@
                 
                 const firstOpen = rawText.indexOf('{');                                
                 const lastClose = rawText.lastIndexOf('}');                                
-                if(firstOpen === -1 || lastClose === -1) throw new Error("JSON 인클루드 에러");
+                if(firstOpen === -1 || lastClose === -1) throw new Error("JSON 인코딩 에러");
                 rawText = rawText.substring(firstOpen, lastClose + 1);                                                                
                 
                 const aiData = JSON.parse(rawText);                                                
-                const title = aiData.title || "AI 커스텀 설계 조립체";
-                currentAIExplanation = aiData.description || "비정형 설계 연산이 완료되었습니다.";                                                
+                const title = aiData.title || "정밀 기계 장치";
+                currentAIExplanation = aiData.description || "CAD 데이터 가공이 완료되었습니다.";                                                
                 const partsList = aiData.parts || [];
                 
                 renderAIAssembly(partsList);                                                
-                controls.target.set(0, 0.8, 0);                                
+                controls.target.set(0, 0.5, 0);                                
                 
-                outputDiv.innerText = `🛠️ [AI 자율 구조 설계 사양]\n- 과제 프로젝트명: ${title}\n\n📖 [구조 역학 분석 가이드]\n${currentAIExplanation}`;                                                
+                outputDiv.innerText = `🛠️ [AI 역학 설계 사양]\n- 컴포넌트 모델: ${title}\n\n📖 [공학적 설계 가이드]\n${currentAIExplanation}`;                                                
                 speakResult();                                
             } catch (error) {                                
                 console.error(error);                                
-                outputDiv.innerText = `⚠️ 에러가 발생했습니다. 구글 앱스 스크립트 코드 내부의 API Key 상태 혹은 JSON 규격을 확인해 주세요.`;                        
+                outputDiv.innerText = `⚠️ 3D 연산 오류가 발생했습니다. 구글 앱스 스크립트의 API Key 또는 통신 상태를 재확인하세요.`;                        
             }                
         }                
 
