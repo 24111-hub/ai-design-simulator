@@ -3,7 +3,7 @@
 <head>        
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 기반 3D 기계 설계 다각도 시뮬레이터</title>            
+    <title>AI 기반 다동적 기계 구조 조립 시뮬레이터</title>            
     <style>                
         body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }                
         header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }                
@@ -39,7 +39,7 @@
 </head>
 <body>        
     <header>                
-        <h2>⚙️ AI Mechanical 3D Design Studio</h2>                
+        <h2>⚙️ AI Multi-Assembly Design Studio</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>                        
             <button id="btn-login" onclick="toggleLogin()" style="width:auto; display:inline-block; padding:8px 15px;">구글 로그인</button>                
@@ -47,14 +47,14 @@
     </header>        
     <div class="main-container">                
         <div class="control-panel">                        
-            <h3>🤖 AI 기계 설계 가이더 (조립체 버전)</h3>                        
-            <p style="color:#666; font-size:13px; margin:0;">구조적 설계 명령을 내리면 완전하게 조립된 기계 형상이 빌드됩니다.</p>                        
-            <textarea id="user-input" placeholder="예: 알루미늄 합금 재질의 관절형 스마트폰 거치대 조립체 설계해줘"></textarea>                        
-            <button id="btn-generate" onclick="askAI()">AI 설계 및 3D 매핑 시작</button>                                    
+            <h3>🤖 유연한 AI 구조 설계기</h3>                        
+            <p style="color:#666; font-size:13px; margin:0;">AI가 하부 부품들을 유기적으로 조합하여 완전체 조립 구조를 설계합니다.</p>                        
+            <textarea id="user-input" placeholder="예: 감속기 기어박스 설계해줘 / 3축 감속 로봇 관절 구조 설계해줘 / 데스크탑 거치대 조립체"></textarea>                        
+            <button id="btn-generate" onclick="askAI()">AI 구조 설계 및 조립 시작</button>                                    
             <hr style="width:100%; border: 0; border-top: 1px solid #eee; margin:5px 0;">                                    
-            <h4>📋 설계 사양 및 도면 설명</h4>                        
-            <div id="ai-output">설계 명령을 내리면 완제품 구조가 실시간으로 분석됩니다.</div>                        
-            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 도슨트 설명 듣기 (TTS)</button>                
+            <h4>📋 매핑된 기계 구조 정보</h4>                        
+            <div id="ai-output">설명문과 구조 치수가 여기에 실시간 매핑됩니다.</div>                        
+            <button id="btn-tts" onclick="speakResult()" style="background:#28a745;">🔊 AI 구조 가이드 듣기 (TTS)</button>                
         </div>                
         <div class="viewer-panel">                        
             <div class="viewer-hint">🖱️ 좌클릭: 회전 | 우클릭: 이동 | 휠: 확대/축소</div>                        
@@ -75,11 +75,12 @@
         
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 본인의 작동하는 최신 구글 웹 앱 URL 주소로 꼭 교체해 주세요!
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMaOZbFeIwzR02-sQbX3uO_W3OkF2lHFcksZVipimuvGn-fjLK22-wuqOEhLiIOxOr/exec";                                
+        // ⚠️ 본인의 최신 웹 앱 URL 주소로 변경하여 적용하세요!
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwizSUGvEq7BEEMmLPxejLJKvzxH19Y8AfOMWoAbVlzQEL8c3zdoz-REfLb290xYKL8/exec";                                
         
         let currentAIExplanation = "";                 
         let currentAssembly; 
+        let currentType = "STAND";
 
         const provider = new firebase.auth.GoogleAuthProvider();                                
         function toggleLogin() {                        
@@ -95,25 +96,25 @@
             const statusText = document.getElementById('user-status');                        
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
-            if (user) {                                
-                statusText.innerText = `👤 ${user.displayName} 엔지니어`;                                
-                loginBtn.innerText = "로그아웃";                                
-                generateBtn.disabled = false;                        
-            } else {                                
-                statusText.innerText = "로그인이 필요합니다.";                                
-                loginBtn.innerText = "구글 로그인";                                
-                generateBtn.disabled = true;                        
-            }                
+            if (user) {                
+                statusText.innerText = `👤 ${user.displayName} 엔지니어`;                
+                loginBtn.innerText = "로그아웃";                
+                generateBtn.disabled = false;            
+            } else {                
+                statusText.innerText = "로그인이 필요합니다.";                
+                loginBtn.innerText = "구글 로그인";                
+                generateBtn.disabled = true;            
+            }        
         });                
 
         // ==========================================
-        // 3D 뷰어 엔진 및 조립 라이팅 환경 구축
+        // 3D 그래픽스 렌더링 셋업
         // ==========================================
         const container = document.getElementById('canvas-container');                
         const scene = new THREE.Scene();                
-        scene.background = new THREE.Color(0x1a1a1a);                        
+        scene.background = new THREE.Color(0x1c1d22);                        
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);                
-        camera.position.set(5, 5, 8);                         
+        camera.position.set(6, 6, 9);                         
         const renderer = new THREE.WebGLRenderer({ antialias: true });                
         renderer.setSize(container.clientWidth, container.clientHeight);                
         container.appendChild(renderer.domElement);                        
@@ -121,101 +122,156 @@
         controls.enableDamping = true;                 
         controls.dampingFactor = 0.05;                        
         
-        const gridHelper = new THREE.GridHelper(12, 24, 0x007bff, 0x444444);                
+        const gridHelper = new THREE.GridHelper(15, 30, 0x007bff, 0x333333);                
         scene.add(gridHelper);                                
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);                
+        
+        // 조립체 내부 음영 표현을 위한 멀티 조명 시스템
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);                
         scene.add(ambientLight);                
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);                
-        dirLight1.position.set(5, 10, 7);                
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.7);                
+        dirLight1.position.set(8, 12, 8);                
         scene.add(dirLight1);                        
-        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.4);                
-        dirLight2.position.set(-5, 3, -5);                
+        const dirLight2 = new THREE.DirectionalLight(0x90caf9, 0.5);                
+        dirLight2.position.set(-8, 4, -8);                
         scene.add(dirLight2);
 
-        // 첫 구동 시 기본 조립 형태 렌더링
-        buildAssembly(1.5, 2.0);                        
+        // 초기 기본 조립 구조 렌더링
+        processDynamicAssembly("STAND", 1.2, 1.8);                        
         
         // ==========================================
-        // 🛠️ 핵심: 다중 파츠 결합 방식의 조립체 빌더 (Assembly Builder)
+        // 🛠️ 핵심: 동적 가변형 조립 가공 엔진
         // ==========================================
-        function buildAssembly(scaleWidth, scaleHeight) {                        
+        function processDynamicAssembly(type, scaleX, scaleY) {                        
             if(currentAssembly) scene.remove(currentAssembly);                        
             
-            // 파츠들을 하나로 묶어줄 상위 조립체 그룹 생성
             currentAssembly = new THREE.Group();
+            currentType = type;
             
-            // 메탈릭 재질 서피스 정의
-            const metalMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0xcccccc, 
-                metalness: 0.9, 
-                roughness: 0.15 
-            });
-            const jointMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x333333, 
-                metalness: 0.7, 
-                roughness: 0.4 
-            });
+            // 재질 라이브러리
+            const matMetal = new THREE.MeshStandardMaterial({ color: 0xdcdcdc, metalness: 0.85, roughness: 0.2 });
+            const matDarkJoint = new THREE.MeshStandardMaterial({ color: 0x2e3138, metalness: 0.6, roughness: 0.4 });
+            const matBrass = new THREE.MeshStandardMaterial({ color: 0xe5a93c, metalness: 0.8, roughness: 0.25 });
+            const matHousing = new THREE.MeshStandardMaterial({ color: 0x78909c, metalness: 0.4, roughness: 0.5, transparent: true, opacity: 0.8 });
 
-            // 파츠 1: 바닥 지지판 (Base)
-            const baseGeo = new THREE.BoxGeometry(scaleWidth, 0.1, scaleWidth * 1.2);
-            const baseMesh = new THREE.Mesh(baseGeo, metalMaterial);
-            baseMesh.position.y = 0.05;
-            currentAssembly.add(baseMesh);
+            if (type === "GEARBOX") {
+                // ⚙️ 1. 기어박스 구조 동적 조립
+                // 케이스(하우징)
+                const boxGeo = new THREE.BoxGeometry(scaleX * 2, scaleY, scaleX * 1.5);
+                const boxMesh = new THREE.Mesh(boxGeo, matHousing);
+                boxMesh.position.y = scaleY / 2;
+                currentAssembly.add(boxMesh);
+                
+                // 메인 구동축 (Shaft)
+                const shaftGeo = new THREE.CylinderGeometry(0.08, 0.08, scaleX * 2.4, 16);
+                const shaftMesh = new THREE.Mesh(shaftGeo, matMetal);
+                shaftMesh.rotation.z = Math.PI / 2;
+                shaftMesh.position.set(0, scaleY / 2, 0);
+                currentAssembly.add(shaftMesh);
 
-            // 파츠 2: 하부 메인 기둥 (Lower Arm)
-            const armHeight = scaleHeight * 0.8;
-            const armGeo = new THREE.CylinderGeometry(0.08, 0.1, armHeight, 16);
-            const armMesh = new THREE.Mesh(armGeo, metalMaterial);
-            armMesh.position.set(0, armHeight / 2 + 0.1, -scaleWidth * 0.2);
-            armMesh.rotation.x = -0.15; // 살짝 앞으로 기울임 디테일
-            currentAssembly.add(armMesh);
+                // 메인 기어 1 (Driver Gear)
+                const gear1Geo = new THREE.TorusGeometry(scaleX * 0.5, 0.12, 12, 48);
+                const gear1Mesh = new THREE.Mesh(gear1Geo, matBrass);
+                gear1Mesh.rotation.y = Math.PI / 2;
+                gear1Mesh.position.set(-scaleX * 0.3, scaleY / 2, 0);
+                currentAssembly.add(gear1Mesh);
 
-            // 파츠 3: 중앙 가동 관절 힌지 (Joint Hinge)
-            const jointGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 16);
-            const jointMesh = new THREE.Mesh(jointGeo, jointMaterial);
-            jointMesh.rotation.z = Math.PI / 2; // 가로 방향 회전
-            jointMesh.position.set(0, armHeight + 0.1, -scaleWidth * 0.3);
-            currentAssembly.add(jointMesh);
+                // 맞물린 기어 2 (Driven Gear)
+                const gear2Geo = new THREE.TorusGeometry(scaleX * 0.3, 0.09, 12, 48);
+                const gear2Mesh = new THREE.Mesh(gear2Geo, matMetal);
+                gear2Mesh.rotation.y = Math.PI / 2;
+                gear2Mesh.position.set(scaleX * 0.3, scaleY / 2, 0);
+                currentAssembly.add(gear2Mesh);
 
-            // 파츠 4: 거치 패널 (Holder Plate)
-            const holderGeo = new THREE.BoxGeometry(scaleWidth * 1.1, 0.06, scaleWidth * 1.4);
-            const holderMesh = new THREE.Mesh(holderGeo, metalMaterial);
-            // 힌지 상단에 결합 및 스마트폰 거치 각도(45도) 구현
-            holderMesh.position.set(0, armHeight + 0.5, -scaleWidth * 0.1);
-            holderMesh.rotation.x = 0.6; 
-            currentAssembly.add(holderMesh);
+            } else if (type === "ROBOT_ARM") {
+                // 🤖 2. 다관절 로봇 팔 구조 동적 조립
+                // 회전 베이스 기단부
+                const baseGeo = new THREE.CylinderGeometry(scaleX * 0.6, scaleX * 0.7, 0.3, 24);
+                const baseMesh = new THREE.Mesh(baseGeo, matDarkJoint);
+                baseMesh.position.y = 0.15;
+                currentAssembly.add(baseMesh);
 
-            // 파츠 5: 받침대 하단 고정 받침 (Hooks)
-            const hookGeo = new THREE.BoxGeometry(scaleWidth * 1.1, 0.15, 0.1);
-            const hookMesh = new THREE.Mesh(hookGeo, jointMaterial);
-            hookMesh.position.set(0, armHeight + 0.15, scaleWidth * 0.4);
-            hookMesh.rotation.x = 0.6;
-            currentAssembly.add(hookMesh);
+                // 하부 링크 붐대 (Lower Boom)
+                const boom1H = scaleY * 0.7;
+                const boom1Geo = new THREE.BoxGeometry(0.12, boom1H, 0.15);
+                const boom1Mesh = new THREE.Mesh(boom1Geo, matMetal);
+                boom1Mesh.position.set(0, boom1H / 2 + 0.3, 0);
+                boom1Mesh.rotation.z = 0.2; 
+                currentAssembly.add(boom1Mesh);
+
+                // 팔꿈치 관절 모듈 (Joint Module)
+                const elbowGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.3, 16);
+                const elbowMesh = new THREE.Mesh(elbowGeo, matDarkJoint);
+                elbowMesh.rotation.x = Math.PI / 2;
+                elbowMesh.position.set(boom1H * 0.2, boom1H + 0.3, 0);
+                currentAssembly.add(elbowMesh);
+
+                // 상부 링크 (Upper Link)
+                const boom2H = scaleY * 0.5;
+                const boom2Geo = new THREE.CylinderGeometry(0.06, 0.06, boom2H, 16);
+                const boom2Mesh = new THREE.Mesh(boom2Geo, matMetal);
+                boom2Mesh.position.set(boom1H * 0.2 - (boom2H/4), boom1H + 0.3 + (boom2H/2), 0);
+                boom2Mesh.rotation.z = -0.4;
+                currentAssembly.add(boom2Mesh);
+
+            } else {
+                // 📱 3. 관절 거치대/스탠드 구조 기본형 조립
+                const baseGeo = new THREE.BoxGeometry(scaleX * 1.2, 0.08, scaleX * 1.4);
+                const baseMesh = new THREE.Mesh(baseGeo, matMetal);
+                baseMesh.position.y = 0.04;
+                currentAssembly.add(baseMesh);
+
+                const pillarH = scaleY * 0.8;
+                const pillarGeo = new THREE.CylinderGeometry(0.07, 0.09, pillarH, 16);
+                const pillarMesh = new THREE.Mesh(pillarGeo, matMetal);
+                pillarMesh.position.set(0, pillarH / 2 + 0.08, -scaleX * 0.2);
+                pillarMesh.rotation.x = -0.12;
+                currentAssembly.add(pillarMesh);
+
+                const hingeGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.28, 16);
+                const hingeMesh = new THREE.Mesh(hingeGeo, matDarkJoint);
+                hingeMesh.rotation.z = Math.PI / 2;
+                hingeMesh.position.set(0, pillarH + 0.08, -scaleX * 0.28);
+                currentAssembly.add(hingeMesh);
+
+                const panelGeo = new THREE.BoxGeometry(scaleX * 1.3, 0.05, scaleX * 1.5);
+                const panelMesh = new THREE.Mesh(panelGeo, matMetal);
+                panelMesh.position.set(0, pillarH + 0.4, -scaleX * 0.1);
+                panelMesh.rotation.x = 0.55; 
+                currentAssembly.add(panelMesh);
+            }
             
-            // 씬에 조립체 최종 주입
             scene.add(currentAssembly);        
         }                
 
         function animate() {                        
             requestAnimationFrame(animate);                        
             controls.update();                         
-            if(currentAssembly) currentAssembly.rotation.y += 0.002; // 전체 조립품 회전시킴                     
+            
+            // 조립 구조체의 다각도 검토를 위한 자동 피벗 회전 조작
+            if(currentAssembly) {
+                if(currentType === "GEARBOX") {
+                    currentAssembly.children[1].rotation.y += 0.02; // 기어박스 선택 시 샤프트 전동 회전
+                } else {
+                    currentAssembly.rotation.y += 0.003; 
+                }
+            }
             renderer.render(scene, camera);                
         }                
         animate();                
 
         // ==========================================
-        // AI 데이터 가드 및 스케일 제어 로직
+        // 유연한 매핑을 위한 AI 컴포넌트 데이터 처리 로직
         // ==========================================
         async function askAI() {                        
             const inputEl = document.getElementById('user-input');                        
             const userInput = inputEl.value;                        
-            if(!userInput) return alert("설계 요구사항을 입력하세요!");                                    
+            if(!userInput) return alert("설계하고자 하는 메커니즘을 입력하세요!");                                    
             
             const outputDiv = document.getElementById('ai-output');                        
-            outputDiv.innerText = "조립 파츠들의 허용 공차 및 설계 스케일 연산 중...";                                    
+            outputDiv.innerText = "사용자 요구 기계 분석 후 맞춤형 조립 매트릭스 계산 중...";                                    
             
-            const systemPrompt = `${userInput} -> 이 제품에 필요한 규격을 정의해줘. 결과는 다른 수식어나 설명 없이 오직 하단의 JSON 포맷으로만 출력해야 해. { "width": 추천 가로폭 숫자(1.0~2.5사이), "height": 추천 높이 숫자(1.5~3.0사이), "description": "조립 상태에서의 무게중심과 구조 역학적 장점 설명 문장" }`;                                    
+            // 💡 프롬프트를 통해 형태를 제한하지 않고 구조체의 특성을 AI가 직접 선택하게 유도
+            const systemPrompt = `${userInput} -> 이 요구사항을 분석하여 가장 적합한 기계 조립체 종류를 매핑해줘. 결과는 다른 텍스트 없이 오직 하단의 JSON으로만 출력해. { "assemblyType": "GEARBOX" 또는 "ROBOT_ARM" 또는 "STAND", "scaleX": 가로 컴포넌트 비율 범위(1.0~2.3), "scaleY": 세로 컴포넌트 비율 범위(1.2~2.8), "description": "해당 기계 구조 조립체 가동 원리 및 조합된 파츠들의 공학적 설명" }`;                                    
             
             try {                                
                 const response = await fetch(APPS_SCRIPT_URL, {                                        
@@ -230,20 +286,21 @@
                 rawText = rawText.substring(firstOpen, lastClose + 1);                                                                
                 
                 const aiData = JSON.parse(rawText);                                                
-                const w = Number(aiData.width) || 1.5;                                
-                const h = Number(aiData.height) || 2.0;                                
-                currentAIExplanation = aiData.description || "완제품 조립 매핑이 완료되었습니다.";                                                
+                const type = aiData.assemblyType || "STAND";                                
+                const x = Number(aiData.scaleX) || 1.2;                                
+                const y = Number(aiData.scaleY) || 1.8;                                
+                currentAIExplanation = aiData.description || "맞춤형 기계 구조 빌드가 완료되었습니다.";                                                
                 
-                // 단일 부품이 아닌 완제품 조립 함수 실행
-                buildAssembly(w, h);                                                
-                controls.target.set(0, h/2, 0);                                
+                // 동적 파츠 생성 및 통합 조립 트리거
+                processDynamicAssembly(type, x, y);                                                
+                controls.target.set(0, y/2, 0);                                
                 
-                outputDiv.innerText = `📐 [AI 완제품 설계 도면]\n- 조립체 권장 폭: ${w}m\n- 구조체 연장 높이: ${h}m\n\n💡 [구조 해석 가이드]\n${currentAIExplanation}`;                                                
+                outputDiv.innerText = `⚙️ [AI 맞춤 복합 조립 구조 매핑]\n- 조립체 성격: ${type}\n- 가로 설계 사양: ${x}m\n- 구조 수직 사양: ${y}m\n\n📖 [구조 설계 기술서]\n${currentAIExplanation}`;                                                
                 speakResult();                                
-                saveToFirestore(userInput, "Assembly_Stand", w, h);                        
+                saveToFirestore(userInput, type, x, y);                        
             } catch (error) {                                
                 console.error(error);                                
-                outputDiv.innerText = `⚠️ 조립 연산 중 에러가 발생했습니다. Apps Script의 Gemini API 키 유효성과 [새 배포] 주소를 다시 한번 체크해 주세요.`;                        
+                outputDiv.innerText = `⚠️ 조립 연산 예외가 발생했습니다. Apps Script 배포 및 API Key 상태를 점검해 주세요.`;                        
             }                
         }                
 
@@ -255,17 +312,16 @@
             window.speechSynthesis.speak(utterance);                
         }                
 
-        function saveToFirestore(prompt, shape, radius, height) {                        
+        function saveToFirestore(prompt, type, sx, sy) {                        
             const user = firebase.auth().currentUser;                        
             if (user) {                                
                 firebase.firestore().collection("machinery_blueprints").add({                                        
                     engineerId: user.uid,                                        
-                    engineerEmail: user.email,                                        
-                    inputCommand: prompt || "조립체 명령",                                        
-                    blueprint: { shape: shape, radius: Number(radius), height: Number(height) },                                        
-                    engineeringNote: currentAIExplanation || "조립 가이드",                                        
+                    inputCommand: prompt,                                        
+                    blueprint: { type: type, scaleX: sx, scaleY: sy },                                        
+                    engineeringNote: currentAIExplanation,                                        
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()                                
-                }).catch(err => console.error("❌ 백업 실패:", err));                        
+                }).catch(err => console.log("백업 스킵"));                        
             }                
         }        
     </script>
