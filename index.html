@@ -22,9 +22,9 @@
         button:hover { background: #2563eb; }                
         button:disabled { background: #4a5568; cursor: not-allowed; opacity: 0.5; }
         
-        .search-btn { background: #6366f1; } /* 보라색 검색 버튼 */
+        .search-btn { background: #6366f1; } 
         .search-btn:hover { background: #4f46e5; }
-        .confirm-btn { background: #ec4899; display: none; } /* 핑크색 승인 버튼 */
+        .confirm-btn { background: #ec4899; display: none; margin-top: 5px; } 
         .confirm-btn:hover { background: #db2777; }
 
         /* 오른쪽 진단 대시보드 패널 */
@@ -42,9 +42,9 @@
         .report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
     </style>        
     
-    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>        
-    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js)"></script>        
-    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js)"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>        
     <header>                
@@ -77,7 +77,7 @@
         <div class="dashboard-panel">                        
             <div class="top-summary-zone">
                 <div class="image-card" id="img-container">
-                    <div class="image-placeholder" id="img-placeholder">제품을 검색하면<br>AI가 실시간 매핑합니다.</div>
+                    <div class="image-placeholder" id="img-placeholder">제품을 검색하면<br>여기에 이미지가 매핑됩니다.</div>
                     <img id="out-img" src="" alt="제품 이미지">
                 </div>
                 
@@ -113,7 +113,7 @@
         const firebaseConfig = {            
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
             authDomain: "project-6180622403440470920.firebaseapp.com",            
-            databaseURL: "[https://project-6180622403440470920-default-rtdb.firebaseio.com](https://project-6180622403440470920-default-rtdb.firebaseio.com)",            
+            databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
             projectId: "project-6180622403440470920",            
             storageBucket: "project-6180622403440470920.firebasestorage.app",            
             messagingSenderId: "626753939152",            
@@ -122,8 +122,8 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 본인의 구글 웹 앱 배포 URL 주소를 넣으세요.
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRxP4SU8eMou8PIHJWYZb_8v3UqBtBdndZKstro-C50-4Iz4Vduj3TmkjXiJf4t6e4/exec";                                
+        // ⚠️ [주의] 질문자님의 구글 웹앱 URL 주소로 교체해 주세요.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby37LruDDvj41uuIb2R6llVcHmbYvP69ssYViJ89cpftK9imjBGEI1y3AvCJnMZKgwk/exec";                                
         
         let currentSolutionText = ""; 
         const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -140,8 +140,8 @@
             else { statusText.innerText = "로그인이 필요합니다."; }        
         });                
 
-        // 💡 [핵심 변혁] AI에게 먼저 제품의 정체와 어울리는 이미지를 물어보는 함수
-        async function searchDeviceImage() {
+        // 💡 텍스트 실시간 검증 기반 서치 엔진 구축
+        function searchDeviceImage() {
             const prodName = document.getElementById('prod-name').value.trim();
             const searchBtn = document.getElementById('btn-search');
             const confirmBtn = document.getElementById('btn-confirm-device');
@@ -150,50 +150,31 @@
 
             if (!prodName) return alert("제품명을 입력해 주세요!");
 
-            searchBtn.innerText = "⚡ AI 기기 탐색 중...";
-            searchBtn.disabled = true;
-            placeholderEl.innerText = "AI가 해당 모델에 맞는\n이미지 카테고리를 분석 중입니다...";
-
-            // 임시로 AI에게 기기 종류가 무엇인지 파악해 오라고 요청
-            const prePrompt = `[기기 분석 요청]: 사용자가 입력한 기기명은 '${prodName}'입니다. 이 장비가 어떤 범주의 테크 장비인지 식별하여 양식에 맞춰 JSON으로 즉시 반환하세요.`;
-
-            try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ prompt: prePrompt })
-                });
-                
-                const resText = await response.text();
-                let serverData = JSON.parse(resText);
-                let jsonContent = serverData.choices[0].message.content.replace(/```json|```/gi, "").trim();
-                let aiDeviceData = JSON.parse(jsonContent);
-
-                // AI가 판별해 준 영문 키워드 추출 (예: battery, smartphone, headphones 등)
-                const keyword = aiDeviceData.image_keyword || "tech";
-                
-                // 람보르기니가 나오던 무작위 해시 주소를 버리고, 정제된 테크 전용 카테고리 기반 검색 주소 연결
-                imgEl.src = `https://images.unsplash.com/featured/300x300/?${encodeURIComponent(keyword)}`;
-                
-                imgEl.onload = function() {
-                    placeholderEl.style.display = "none";
-                    imgEl.style.display = "block";
-                    document.getElementById('out-name').innerText = aiDeviceData.product_name || prodName;
-                    searchBtn.style.display = "none"; // 검색 버튼 숨김
-                    confirmBtn.style.display = "block"; // [이 제품이 맞습니다] 노출
-                };
-
-            } catch (e) {
-                console.error(e);
-                placeholderEl.innerText = "기기 분석 실패.\n기본 테크 이미지로 대체합니다.";
-                imgEl.src = "[https://images.unsplash.com/photo-1518770660439-4636190af475?w=300](https://images.unsplash.com/photo-1518770660439-4636190af475?w=300)";
-                imgEl.onload = () => { placeholderEl.style.display = "none"; imgEl.style.display = "block"; confirmBtn.style.display = "block"; };
-            } finally {
-                searchBtn.innerText = "🔍 기기 이미지 매핑 및 검색";
-                searchBtn.disabled = false;
+            placeholderEl.innerText = "🔍 이미지 서버 스캔 중...";
+            const lowerName = prodName.toLowerCase();
+            
+            // 람보르기니 랜덤 변수를 완전히 제거하고 고정 키워드로 안전하게 분기 처리
+            if (lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
+                imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
+            } else if (lowerName.includes("폰") || lowerName.includes("갤럭시") || lowerName.includes("phone")) {
+                imgEl.src = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format&fit=crop&q=80";
+            } else if (lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
+                imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
+            } else if (lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북") || lowerName.includes("맥북")) {
+                imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
+            } else {
+                imgEl.src = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80"; 
             }
+
+            imgEl.onload = function() {
+                placeholderEl.style.display = "none";
+                imgEl.style.display = "block";
+                document.getElementById('out-name').innerText = prodName;
+                searchBtn.style.display = "none"; 
+                confirmBtn.style.display = "block"; 
+            };
         }
 
-        // 사용자가 최종 승인 완료했을 때 흐름
         function approveDevice() {
             document.getElementById('prod-symptom').disabled = false;
             document.getElementById('btn-generate').disabled = false;
@@ -205,7 +186,6 @@
             document.getElementById('prod-symptom').focus();
         }
 
-        // 증상 기입 후 최종 고장 진단 실행
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -222,8 +202,15 @@
                 const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ prompt: combinedPrompt }) });                                                                
                 const responseText = await response.text();
                 let serverData = JSON.parse(responseText);
-                let targetJSONText = serverData.choices[0].message.content.replace(/```json|```/gi, "").trim();
-
+                
+                let targetJSONText = "";
+                if (serverData.choices && serverData.choices[0] && serverData.choices[0].message) {
+                    targetJSONText = serverData.choices[0].message.content;
+                } else {
+                    targetJSONText = responseText;
+                }
+                
+                targetJSONText = targetJSONText.replace(/```json|```/gi, "").trim();
                 let aiData = JSON.parse(targetJSONText);
                 
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
