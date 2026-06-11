@@ -3,21 +3,35 @@
 <head>        
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 기반 2D 스마트 물류 기계 공정 시뮬레이터</title>            
+    <title>AI 기반 기계 고장 진단 및 정비 가이드 시스템</title>            
     <style>                
-        body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #1e1e1e; color: #fff; }                
-        header { background: #141414; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; }                
+        body { margin: 0; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1e; color: #e2e8f0; }                
+        header { background: #111115; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }                
+        h2 { margin: 0; font-size: 20px; letter-spacing: -0.5px; color: #3b82f6; }
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
-        .control-panel { width: 35%; padding: 20px; box-sizing: border-box; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: #252529; }                
-        .viewer-panel { width: 65%; display: flex; justify-content: center; align-items: center; background: #111; position: relative; }                
-        textarea, button { padding: 12px; font-size: 15px; border-radius: 6px; box-sizing: border-box; width: 100%; border: 1px solid #444; }                
         
-        #user-input { min-height: 90px; background: #323236; color: #fff; resize: none; }        
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }                
-        button:hover { background: #0056b3; }                
-        #ai-output { background: #323236; padding: 15px; border-left: 5px solid #007bff; border-radius: 4px; min-height: 140px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #ddd; }                
-        #canvas-container { background: #16161a; border: 2px solid #333; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .viewer-hint { position: absolute; top: 15px; right: 15px; color: #007bff; font-size: 12px; font-weight: bold; }
+        /* 왼쪽 입력 패널 */
+        .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; }                
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
+        input, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #4a5568; background: #2d3748; color: #fff; box-sizing: border-box; width: 100%; transition: 0.2s; }                
+        input:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+        textarea { min-height: 120px; resize: none; }
+        
+        button { padding: 14px; font-size: 16px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 6px rgba(59,130,246,0.2); }                
+        button:hover { background: #2563eb; transform: translateY(-1px); }                
+        button:disabled { background: #4a5568; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        /* 오른쪽 진단 대시보드 패널 */
+        .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
+        .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .card-title { font-size: 13px; font-weight: bold; color: #718096; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
+        
+        .report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; background: #2d3748; }
     </style>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
@@ -25,26 +39,53 @@
 </head>
 <body>        
     <header>                
-        <h2>🏭 AI Generative 2D Logistics Blueprint</h2>                
+        <h2>🛠️ Predictive Machinery Maintenance AI System</h2>                
         <div>                        
-            <span id="user-status" style="margin-right: 15px;">로그인이 필요합니다.</span>                        
-            <button id="btn-login" onclick="toggleLogin()" style="width:auto; display:inline-block; padding:8px 15px; background:#444; color:#fff;">구글 로그인</button>                
+            <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
+            <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568; box-shadow:none;">구글 로그인</button>                
         </div>        
     </header>        
     <div class="main-container">                
-        <div class="control-panel">                        
-            <h3>🤖 물류 시스템 자동화 가공기</h3>                        
-            <p style="color:#aaa; font-size:13px; margin:0;">일상적인 대화체 문장으로 공장 설비 요구사항을 입력해 보세요.</p>                        
-            <textarea id="user-input" placeholder="예: '긴 컨베이어 벨트 오른쪽에 분류용 로봇팔 2개랑 스캐너 하나 놔줘'"></textarea>                        
-            <button id="btn-generate" onclick="askAI()">물류 라인 동적 배치 시작</button>                                    
-            <hr style="width:100%; border: 0; border-top: 1px solid #333; margin:5px 0;">                                    
-            <h4>📋 공정 역학 명세서</h4>                        
-            <div id="ai-output">설계 명령을 내리면 기계 공학적 2D 플랜 도면이 렌더링됩니다.</div>                        
-            <button id="btn-tts" onclick="speakResult()" style="background:#28a745; border:none; color:white;">🔊 설계 가이드 음성 듣기</button>                
+        <div class="input-panel">                        
+            <h3>🤖 설비 상태 원격 진단</h3>                        
+            <div class="input-group">
+                <label>기계 품명 / 모델 일련번호</label>
+                <input type="text" id="prod-name" placeholder="예: 유압 실린더 CYL-400, 현대 2.0 디젤 엔진 등">
+            </div>
+            <div class="input-group">
+                <label>현재 발생 중인 이상 증상 기술</label>
+                <textarea id="prod-symptom" placeholder="예: 구동 중 틱틱 소리가 규칙적으로 나며 유압이 갑자기 떨어지고 내부 온도가 급상승함"></textarea>
+            </div>
+            <button id="btn-generate" onclick="askAI()">AI 종합 결함 분석 개시</button>                                    
+            <button id="btn-tts" onclick="speakResult()" style="background:#10b981; box-shadow: 0 4px 6px rgba(16,185,129,0.2);">🔊 정비 지침 음성 브리핑</button>                
         </div>                
-        <div class="viewer-panel">                        
-            <div class="viewer-hint">● LIVE RUNNING</div>                        
-            <canvas id="canvas-container" width="600" height="400"></canvas>                
+        
+        <div class="dashboard-panel">                        
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">진단 대상 모델 (Identified Model)</div>
+                    <div class="card-value" id="out-name">---</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">설비 위험 등급 (Risk Assessment)</div>
+                    <div class="card-value" id="out-level">---</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">핵심 추정 원인 (Primary Root Cause)</div>
+                <div class="card-value" id="out-cause" style="color: #f59e0b; font-size: 18px;">---</div>
+            </div>
+
+            <div class="card" style="flex: 1;">
+                <div class="card-title">공학적 매커니즘 정밀 분석 (Engineering Analysis)</div>
+                <div class="report-box" id="out-analysis">기계의 식별 정보와 결함 현상을 왼쪽에 입력하고 분석 버튼을 누르면 AI 정밀 진단서가 이곳에 실시간 매핑됩니다.</div>
+            </div>
+
+            <div class="card" style="flex: 1; border-left: 5px solid #10b981;">
+                <div class="card-title" style="color: #10b981;">권장 현장 정비 가이드라인 (Action Item List)</div>
+                <div class="report-box" id="out-solution">---</div>
+            </div>
         </div>        
     </div>        
     <script>                
@@ -60,16 +101,10 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 본인의 최신 구글 웹 앱 URL 주소를 넣어주세요.
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWuwKB1AMH327f7GseeZbo2ao89ov_R2b5zPsClbTdVQSViRqzxOvHymC30yv68GMfMw/exec";                                
+        // ⚠️ 성공하셨던 구글 웹 앱 URL 주소를 꼭 다시 여기에 붙여넣어 주세요!
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyi_p3W32TB6E9ERopDbX5wi4D_7Co6GXXKuef3EraB1ok2o2v6gw-s05heF6RDQFsc/exec";                                
         
-        let currentAIExplanation = "";                 
-        let machineryList = []; 
-        let animationFrameId;
-        let globalOffset = 0; // 컨베이어 벨트 움직임 효과용 변수
-
-        const canvas = document.getElementById('canvas-container');
-        const ctx = canvas.getContext('2d');
+        let currentSolutionText = ""; 
 
         const provider = new firebase.auth.GoogleAuthProvider();                                
         function toggleLogin() {                        
@@ -83,124 +118,30 @@
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
             if (user) {                
-                statusText.innerText = `👤 ${user.displayName}`; loginBtn.innerText = "로그아웃"; generateBtn.disabled = false;            
+                statusText.innerText = `👤 엔지니어: ${user.displayName}`; loginBtn.innerText = "로그아웃"; generateBtn.disabled = false;            
             } else {                
                 statusText.innerText = "로그인이 필요합니다."; loginBtn.innerText = "구글 로그인"; generateBtn.disabled = true;            
             }        
         });                
 
-        // 초기 기본 맵 구성
-        machineryList = [
-            { type: "conveyor", x: 50, y: 180, w: 350, h: 40, direction: "right", color: "#34495e" },
-            { type: "scanner", x: 200, y: 175, w: 50, h: 50, color: "#9b59b6" },
-            { type: "robot_arm", x: 480, y: 200, radius: 55, speed: 1.5, color: "#e67e22" }
-        ];
-
-        // ==========================================
-        // 🛠️ 2D 고정밀 메카닉 캔버스 렌더링 루프
-        // ==========================================
-        function drawSimulation() {
-            // 배경 및 도면 모눈종이(Grid) 그리기
-            ctx.fillStyle = "#16161a";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.strokeStyle = "#232329";
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-            for (let y = 0; y < canvas.height; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
-
-            globalOffset += 0.5; // 동적 기계 움직임 카운터
-
-            machineryList.forEach(m => {
-                ctx.save();
-                
-                // 1. 컨베이어 벨트 렌더링 (화살표 흐름 애니메이션 적용)
-                if (m.type === "conveyor") {
-                    ctx.fillStyle = m.color || "#34495e";
-                    ctx.fillRect(m.x, m.y, m.w, m.h);
-                    ctx.strokeStyle = "#7f8c8d";
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(m.x, m.y, m.w, m.h);
-                    
-                    // 기계적인 내부 벨트선 및 화살표 표현
-                    ctx.strokeStyle = "rgba(255,255,255,0.2)";
-                    ctx.setLineDash([5, 5]);
-                    ctx.lineDashOffset = m.direction === "right" ? -globalOffset : globalOffset;
-                    ctx.beginPath();
-                    ctx.moveTo(m.x, m.y + m.h/2);
-                    ctx.lineTo(m.x + m.w, m.y + m.h/2);
-                    ctx.stroke();
-                } 
-                // 2. 로봇 팔 / 크레인 렌더링 (회전 반경 가동 범위 시각화)
-                else if (m.type === "robot_arm") {
-                    const currentAngle = (globalOffset * (m.speed || 1) * Math.PI) / 180;
-                    
-                    // 가동 한계 반경 점선 (정역학 범위)
-                    ctx.strokeStyle = "rgba(230, 126, 34, 0.25)";
-                    ctx.setLineDash([4, 4]);
-                    ctx.beginPath();
-                    ctx.arc(m.x, m.y, m.radius || 50, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    // 로봇 관절 중심 축
-                    ctx.fillStyle = m.color || "#e67e22";
-                    ctx.beginPath(); ctx.arc(m.x, m.y, 12, 0, Math.PI * 2); ctx.fill();
-                    
-                    // 동역학적 물리 링크 Arm 회전선
-                    ctx.strokeStyle = "#fff";
-                    ctx.lineWidth = 4;
-                    ctx.lineCap = "round";
-                    ctx.setLineDash([]);
-                    ctx.beginPath();
-                    ctx.moveTo(m.x, m.y);
-                    ctx.lineTo(m.x + Math.cos(currentAngle) * (m.radius || 50), m.y + Math.sin(currentAngle) * (m.radius || 50));
-                    ctx.stroke();
-                } 
-                // 3. 센서 스캐너 / 검수 모듈 렌더링
-                else if (m.type === "scanner") {
-                    ctx.fillStyle = "rgba(155, 89, 182, 0.2)";
-                    ctx.fillRect(m.x, m.y, m.w, m.h);
-                    ctx.strokeStyle = m.color || "#9b59b6";
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(m.x, m.y, m.w, m.h);
-                    
-                    // 레이저 센서 가시광선 가공
-                    ctx.strokeStyle = "rgba(231, 76, 60, 0.7)";
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(m.x + m.w/2, m.y);
-                    ctx.lineTo(m.x + m.w/2, m.y + m.h);
-                    ctx.stroke();
-                }
-                // 4. 일반 보관 보틀 / 저장 구역
-                else {
-                    ctx.strokeStyle = "#2ecc71";
-                    ctx.setLineDash([2, 2]);
-                    ctx.strokeRect(m.x, m.y, m.w || 40, m.h || 40);
-                    ctx.fillStyle = "rgba(46, 204, 113, 0.1)";
-                    ctx.fillRect(m.x, m.y, m.w || 40, m.h || 40);
-                }
-                
-                ctx.restore();
-            });
-
-            animationFrameId = requestAnimationFrame(drawSimulation);
-        }
-        drawSimulation();
-
-        // AI 통신 분석기
+        // AI 종합 진단 요청기
         async function askAI() {                        
-            const inputEl = document.getElementById('user-input');                        
-            const userInput = inputEl.value;                        
-            if(!userInput) return alert("배치할 일상적인 물류 공장 구조를 설명해 주세요!");                                    
+            const prodName = document.getElementById('prod-name').value;
+            const prodSymptom = document.getElementById('prod-symptom').value;
             
-            const outputDiv = document.getElementById('ai-output');                        
-            outputDiv.innerText = "ChatGPT가 물류 라인 기계 좌표 설계도 연산 중...";                                    
+            if(!prodName || !prodSymptom) return alert("제품명과 구체적인 증상을 모두 입력해 주세요!");                                    
+            
+            const btn = document.getElementById('btn-generate');
+            btn.innerText = "⚙️ 인공지능 결함 매커니즘 분석 중...";
+            btn.disabled = true;
+            
+            // 두 입력을 합쳐서 AI에게 프롬프트로 전송
+            const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
             
             try {                                
                 const response = await fetch(APPS_SCRIPT_URL, {                                        
                     method: 'POST',                    
-                    body: JSON.stringify({ prompt: userInput })                                
+                    body: JSON.stringify({ prompt: combinedPrompt })                                
                 });                                                                
                 
                 let rawText = await response.text();                                
@@ -208,28 +149,33 @@
                 
                 const firstOpen = rawText.indexOf('{');                                
                 const lastClose = rawText.lastIndexOf('}');                                
-                if(firstOpen === -1 || lastClose === -1) throw new Error("JSON 파싱 에러");
+                if(firstOpen === -1 || lastClose === -1) throw new Error("데이터 수신 오류");
                 rawText = rawText.substring(firstOpen, lastClose + 1);                                                                
                 
                 const aiData = JSON.parse(rawText);                                                
-                const title = aiData.title || "지능형 물류 공정";
-                currentAIExplanation = aiData.description || "설계도가 반영되었습니다.";                                                
                 
-                // ⚙️ 2D 좌표 리스트 교체 트리거
-                machineryList = aiData.facilities || [];
+                // 🎨 대시보드 데이터 바인딩 적용
+                document.getElementById('out-name').innerText = aiData.product_name || prodName;
+                document.getElementById('out-level').innerText = aiData.danger_level || "---";
+                document.getElementById('out-cause').innerText = aiData.main_cause || "---";
+                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 실패";
+                document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
-                outputDiv.innerText = `🛠️ [AI 공정 배치도 사양]\n- 라인 분류: ${title}\n\n📖 [기계 역학 설명]\n${currentAIExplanation}`;                                                
+                currentSolutionText = aiData.analysis + " 이어서 정비 조치 사항입니다. " + aiData.solution;
                 speakResult();                                
             } catch (error) {                                
                 console.error(error);                                
-                outputDiv.innerText = `⚠️ 데이터를 파싱하지 못했습니다. 스크립트의 API Key나 배포 상태를 다시 한번 확인해 주세요.`;                        
-            }                
+                document.getElementById('out-analysis').innerText = `⚠️ 통신 또는 파싱 오류가 발생했습니다. 구글 스크립트 코드 내부의 API Key 상태나 배포 URL을 재확인하세요.`;                        
+            } finally {
+                btn.innerText = "AI 종합 결함 분석 개시";
+                btn.disabled = false;
+            }
         }                
 
         function speakResult() {                        
-            if (!currentAIExplanation) return;                                    
+            if (!currentSolutionText) return;                                    
             window.speechSynthesis.cancel();                         
-            const utterance = new SpeechSynthesisUtterance(currentAIExplanation);                        
+            const utterance = new SpeechSynthesisUtterance(currentSolutionText);                        
             utterance.lang = 'ko-KR';                        
             window.speechSynthesis.speak(utterance);                
         }                
