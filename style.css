@@ -1,0 +1,30 @@
+body { margin: 0; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1e; color: #e2e8f0; }                
+header { background: #111115; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }                
+h2 { margin: 0; font-size: 20px; letter-spacing: -0.5px; color: #3b82f6; }
+.main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
+
+/* 왼쪽 입력 패널 */
+.input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; overflow-y: auto; }                
+.input-group { display: flex; flex-direction: column; gap: 8px; }
+.input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
+input, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #4a5568; background: #2d3748; color: #fff; box-sizing: border-box; width: 100%; transition: 0.2s; }                
+input:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+textarea { min-height: 120px; resize: none; }
+
+button { padding: 14px; font-size: 16px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }                
+button:hover { background: #2563eb; }                
+button:disabled { background: #4a5568; cursor: not-allowed; opacity: 0.5; }
+
+/* 오른쪽 진단 대시보드 패널 */
+.dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
+.card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; }
+
+.top-summary-zone { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
+.image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px solid #2d3748; border-radius: 8px; overflow: hidden; height: 150px; position: relative; }
+.image-card img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; line-height: 1.5; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card-title { font-size: 13px; font-weight: bold; color: #718096; margin-bottom: 8px; }
+.card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
+.report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
