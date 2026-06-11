@@ -10,7 +10,6 @@
         h2 { margin: 0; font-size: 20px; letter-spacing: -0.5px; color: #3b82f6; }
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
         
-        /* 왼쪽 입력 패널 */
         .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; }                
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
@@ -22,7 +21,6 @@
         button:hover { background: #2563eb; transform: translateY(-1px); }                
         button:disabled { background: #4a5568; cursor: not-allowed; transform: none; box-shadow: none; }
         
-        /* 오른쪽 진단 대시보드 패널 */
         .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
         .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -101,44 +99,35 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ [중요] 새로 배포하신 본인의 구글 웹 앱 URL 주소를 꼭 여기에 정확히 붙여넣어 주세요!
+        // ⚠️ [필수] 구글 앱스 스크립트 배포 주소를 대입하세요!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOUXCwTjymihXju_-15irpmtZFIuJA3of15PT5G9bDUGIPQ8IeX3E8ltIbkfGQNgBF/exec";                                
         
         let currentSolutionText = ""; 
         const provider = new firebase.auth.GoogleAuthProvider();                                
         
-        // 💡 브라우저 보안 규격(COOP) 차단을 우회하기 위해 팝업창 방식에서 '리다이렉트' 방식으로 완전 개편
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
             if (!user) {
-                firebase.auth().signInWithRedirect(provider).catch(e => console.error("로그인 시도 실패:", e));
+                firebase.auth().signInWithRedirect(provider).catch(e => console.error(e));
             } else {
                 firebase.auth().signOut();                        
             }
         }                
         
-        // 로그인 상태 실시간 모니터링 리스너
         firebase.auth().onAuthStateChanged((user) => {                        
             const statusText = document.getElementById('user-status');                        
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
             if (user) {                
-                statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; 
-                loginBtn.innerText = "로그아웃"; 
-                generateBtn.disabled = false;            
+                statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; loginBtn.innerText = "로그아웃"; generateBtn.disabled = false;            
             } else {                
-                statusText.innerText = "로그인이 필요합니다."; 
-                loginBtn.innerText = "구글 로그인"; 
-                generateBtn.disabled = true;            
+                statusText.innerText = "로그인이 필요합니다."; loginBtn.innerText = "구글 로그인"; generateBtn.disabled = true;            
             }        
         });                
 
-        // 리다이렉트 방식 복귀 후 결과를 안전하게 회수하는 핸들러
-        firebase.auth().getRedirectResult().catch((error) => {
-            console.error("로그인 페이지 복귀 처리 중 오류:", error);
-        });
+        firebase.auth().getRedirectResult().catch((e) => console.error(e));
 
-        // 원격 AI 진단 서버 통신 프로세스
+        // 💡 OpenAI 원본 응답 구조를 완벽하게 분해하고 이중 파싱하는 보정 알고리즘
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -157,44 +146,53 @@
                     body: JSON.stringify({ prompt: combinedPrompt })                                
                 });                                                                
                 
-                // 💡 응답을 텍스트로 안전하게 먼저 받아옴
-                const rawText = await response.text();
-                console.log("서버 원본 대조 데이터:", rawText);
+                const responseText = await response.text();
+                let serverData = JSON.parse(responseText);
                 
+                // 1단계 안전 장치: OpenAI API가 보낸 통째 객체 구조인지 필터링
+                let targetJSONText = "";
+                if (serverData.choices && serverData.choices[0] && serverData.choices[0].message) {
+                    targetJSONText = serverData.choices[0].message.content;
+                } else {
+                    targetJSONText = responseText;
+                }
+
+                // 마크다운 잔재(```json ) 전처리 정리
+                targetJSONText = targetJSONText.replace(/```json|```/gi, "").trim();
+
+                // 2단계 안전 장치: 알맹이 내용 파싱 시도
                 let aiData;
                 try {
-                    aiData = JSON.parse(rawText);
-                } catch (e) {
-                    document.getElementById('out-analysis').innerText = `⚠️ 구글 서버 응답 해석 오류:\n${rawText}`;
-                    return;
-                }                                                
+                    aiData = JSON.parse(targetJSONText);
+                } catch(e) {
+                    // 순수 JSON 형식이 아닐 경우 통합 가공 맵핑
+                    aiData = {
+                        product_name: prodName,
+                        danger_level: "🟡 주의 (Caution)",
+                        main_cause: "회로 이상 및 하드웨어 결함 추정",
+                        analysis: targetJSONText,
+                        solution: "장치의 전원을 차단하고 공식 서비스 센터 방문을 권장합니다."
+                    };
+                }
                 
-                // 🎨 유연한 키 바인딩 구조 채택 (서버와 속성명이 살짝 비껴나가도 100% 매핑되도록 처리)
-                const finalName = aiData.product_name || prodName;
-                const finalLevel = aiData.danger_level || aiData.risk_level || "🟡 주의 (Caution)";
-                const finalCause = aiData.main_cause || aiData.root_cause || "하드웨어 점검 요망";
-                const finalAnalysis = aiData.analysis || aiData.engineering_analysis || rawText;
-                const finalSolution = aiData.solution || aiData.action_items || "안전을 위해 공식 서비스 센터를 방문하세요.";
-
-                // 대시보드 엘리먼트에 실시간 주입
-                document.getElementById('out-name').innerText = finalName;
-                document.getElementById('out-level').innerText = finalLevel;
-                document.getElementById('out-cause').innerText = finalCause;
-                document.getElementById('out-analysis').innerText = finalAnalysis;
-                document.getElementById('out-solution').innerText = finalSolution;
+                // 🎨 최종 뷰 데이터 바인딩
+                document.getElementById('out-name').innerText = aiData.product_name || prodName;
+                document.getElementById('out-level').innerText = aiData.danger_level || "---";
+                document.getElementById('out-cause').innerText = aiData.main_cause || "---";
+                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 내용 없음";
+                document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
-                currentSolutionText = finalAnalysis + " 이어서 권장 조치 사항입니다. " + finalSolution;
+                currentSolutionText = (aiData.analysis || "") + " 이어서 권장 조치 사항입니다. " + (aiData.solution || "");
                 speakResult();                                
             } catch (error) {                                
-                console.error("클라이언트 내부 오류:", error);                                
-                document.getElementById('out-analysis').innerText = `⚠️ 데이터 맵핑 과정에서 장애가 발생했습니다.\n오류 원인: ${error.message}`;                        
+                console.error(error);                                
+                document.getElementById('out-analysis').innerText = `⚠️ 데이터를 해석하는 도중 오류가 발생했습니다.\n이유: ${error.message}`;                        
             } finally {
                 btn.innerText = "AI 제품 원인 분석 시작";
                 btn.disabled = false;
             }
         }                
 
-        // 음성 변환 오디오 가이드 브리핑 (TTS)
         function speakResult() {                        
             if (!currentSolutionText) return;                                    
             window.speechSynthesis.cancel();                         
