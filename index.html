@@ -3,14 +3,13 @@
 <head>        
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 기반 기계 고장 진단 및 정비 가이드 시스템</title>            
+    <title>AI 스마트 일상 제품 고장 진단 및 케어 시스템</title>            
     <style>                
         body { margin: 0; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1e; color: #e2e8f0; }                
         header { background: #111115; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }                
         h2 { margin: 0; font-size: 20px; letter-spacing: -0.5px; color: #3b82f6; }
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
         
-        /* 왼쪽 입력 패널 */
         .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; }                
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
@@ -22,7 +21,6 @@
         button:hover { background: #2563eb; transform: translateY(-1px); }                
         button:disabled { background: #4a5568; cursor: not-allowed; transform: none; box-shadow: none; }
         
-        /* 오른쪽 진단 대시보드 패널 */
         .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
         .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -31,15 +29,14 @@
         .card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
         
         .report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; background: #2d3748; }
     </style>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>        
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js)"></script>        
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js)"></script>
 </head>
 <body>        
     <header>                
-        <h2>🛠️ Predictive Machinery Maintenance AI System</h2>                
+        <h2>📱 AI Consumer Product Diagnostics & Care System</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
             <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568; box-shadow:none;">구글 로그인</button>                
@@ -47,43 +44,43 @@
     </header>        
     <div class="main-container">                
         <div class="input-panel">                        
-            <h3>🤖 설비 상태 원격 진단</h3>                        
+            <h3>🔍 제품 상태 자율 진단</h3>                        
             <div class="input-group">
-                <label>기계 품명 / 모델 일련번호</label>
-                <input type="text" id="prod-name" placeholder="예: 유압 실린더 CYL-400, 현대 2.0 디젤 엔진 등">
+                <label>제품명 또는 모델 번호</label>
+                <input type="text" id="prod-name" placeholder="예: 무선 헤드폰, 맥세이프 보조배터리, 조립형 PC 등">
             </div>
             <div class="input-group">
-                <label>현재 발생 중인 이상 증상 기술</label>
-                <textarea id="prod-symptom" placeholder="예: 구동 중 틱틱 소리가 규칙적으로 나며 유압이 갑자기 떨어지고 내부 온도가 급상승함"></textarea>
+                <label>발생한 이상 증상 고장 현상</label>
+                <textarea id="prod-symptom" placeholder="예: 충전할 때 본체가 비상식적으로 뜨거워지고 가운데가 불룩하게 부풀어 오르는 증상이 있음"></textarea>
             </div>
-            <button id="btn-generate" onclick="askAI()">AI 종합 결함 분석 개시</button>                                    
-            <button id="btn-tts" onclick="speakResult()" style="background:#10b981; box-shadow: 0 4px 6px rgba(16,185,129,0.2);">🔊 정비 지침 음성 브리핑</button>                
+            <button id="btn-generate" onclick="askAI()">AI 제품 원인 분석 시작</button>                                    
+            <button id="btn-tts" onclick="speakResult()" style="background:#10b981; box-shadow: 0 4px 6px rgba(16,185,129,0.2);">🔊 엔지니어 리포트 듣기</button>                
         </div>                
         
         <div class="dashboard-panel">                        
             <div class="grid-2">
                 <div class="card">
-                    <div class="card-title">진단 대상 모델 (Identified Model)</div>
+                    <div class="card-title">진단 대상 제품 (Product Model)</div>
                     <div class="card-value" id="out-name">---</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">설비 위험 등급 (Risk Assessment)</div>
+                    <div class="card-title">안전 위험 등급 (Safety Risk)</div>
                     <div class="card-value" id="out-level">---</div>
                 </div>
             </div>
             
             <div class="card">
-                <div class="card-title">핵심 추정 원인 (Primary Root Cause)</div>
+                <div class="card-title">하드웨어적 추정 원인 (Root Cause)</div>
                 <div class="card-value" id="out-cause" style="color: #f59e0b; font-size: 18px;">---</div>
             </div>
 
             <div class="card" style="flex: 1;">
-                <div class="card-title">공학적 매커니즘 정밀 분석 (Engineering Analysis)</div>
-                <div class="report-box" id="out-analysis">기계의 식별 정보와 결함 현상을 왼쪽에 입력하고 분석 버튼을 누르면 AI 정밀 진단서가 이곳에 실시간 매핑됩니다.</div>
+                <div class="card-title">공학적 메커니즘 분석 (Hardware Analysis)</div>
+                <div class="report-box" id="out-analysis">제품 정보와 증상을 왼쪽에 입력하고 분석 버튼을 누르면 AI 하드웨어 정밀 분석서가 이곳에 실시간 매핑됩니다.</div>
             </div>
 
             <div class="card" style="flex: 1; border-left: 5px solid #10b981;">
-                <div class="card-title" style="color: #10b981;">권장 현장 정비 가이드라인 (Action Item List)</div>
+                <div class="card-title" style="color: #10b981;">권장 조치 및 안전 가이드라인 (Recommended Action)</div>
                 <div class="report-box" id="out-solution">---</div>
             </div>
         </div>        
@@ -92,7 +89,7 @@
         const firebaseConfig = {            
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
             authDomain: "project-6180622403440470920.firebaseapp.com",            
-            databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
+            databaseURL: "[https://project-6180622403440470920-default-rtdb.firebaseio.com](https://project-6180622403440470920-default-rtdb.firebaseio.com)",            
             projectId: "project-6180622403440470920",            
             storageBucket: "project-6180622403440470920.firebasestorage.app",            
             messagingSenderId: "626753939152",            
@@ -101,7 +98,7 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 성공하셨던 구글 웹 앱 URL 주소를 꼭 다시 여기에 붙여넣어 주세요!
+        // ⚠️ [필수 확인] 여기에 구글 앱스 스크립트 '새 배포' 주소를 정확히 넣어주세요!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGOkgWciJPgo9x_NWrOekpbQZ5lShBwMKfoWm13zCl4fuz1mX4x_9PmlSD5BlWlUxg/exec";                                
         
         let currentSolutionText = ""; 
@@ -118,13 +115,12 @@
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
             if (user) {                
-                statusText.innerText = `👤 엔지니어: ${user.displayName}`; loginBtn.innerText = "로그아웃"; generateBtn.disabled = false;            
+                statusText.innerText = `👤 사용자: ${user.displayName}`; loginBtn.innerText = "로그아웃"; generateBtn.disabled = false;            
             } else {                
                 statusText.innerText = "로그인이 필요합니다."; loginBtn.innerText = "구글 로그인"; generateBtn.disabled = true;            
             }        
         });                
 
-        // AI 종합 진단 요청기
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -132,10 +128,9 @@
             if(!prodName || !prodSymptom) return alert("제품명과 구체적인 증상을 모두 입력해 주세요!");                                    
             
             const btn = document.getElementById('btn-generate');
-            btn.innerText = "⚙️ 인공지능 결함 매커니즘 분석 중...";
+            btn.innerText = "⚡ 인공지능 결함 원인 분석 중...";
             btn.disabled = true;
             
-            // 두 입력을 합쳐서 AI에게 프롬프트로 전송
             const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
             
             try {                                
@@ -144,30 +139,22 @@
                     body: JSON.stringify({ prompt: combinedPrompt })                                
                 });                                                                
                 
-                let rawText = await response.text();                                
-                rawText = rawText.replace(/```json|```/gi, "").trim();                                
+                // 💡 버그 유발 구간을 안전하게 교체 (직접 JSON 객체로 받아오기)
+                const aiData = await response.json();                                                
                 
-                const firstOpen = rawText.indexOf('{');                                
-                const lastClose = rawText.lastIndexOf('}');                                
-                if(firstOpen === -1 || lastClose === -1) throw new Error("데이터 수신 오류");
-                rawText = rawText.substring(firstOpen, lastClose + 1);                                                                
-                
-                const aiData = JSON.parse(rawText);                                                
-                
-                // 🎨 대시보드 데이터 바인딩 적용
                 document.getElementById('out-name').innerText = aiData.product_name || prodName;
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
                 document.getElementById('out-cause').innerText = aiData.main_cause || "---";
-                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 실패";
+                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 완료";
                 document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
-                currentSolutionText = aiData.analysis + " 이어서 정비 조치 사항입니다. " + aiData.solution;
+                currentSolutionText = aiData.analysis + " 이어서 권장 조치 사항입니다. " + aiData.solution;
                 speakResult();                                
             } catch (error) {                                
-                console.error(error);                                
-                document.getElementById('out-analysis').innerText = `⚠️ 통신 또는 파싱 오류가 발생했습니다. 구글 스크립트 코드 내부의 API Key 상태나 배포 URL을 재확인하세요.`;                        
+                console.error("클라이언트 에러:", error);                                
+                document.getElementById('out-analysis').innerText = `⚠️ 통신 오류가 발생했습니다. 구글 스크립트 '웹 앱 주소'를 새로고침했는지 점검하세요.\n오류 내용: ${error.message}`;                        
             } finally {
-                btn.innerText = "AI 종합 결함 분석 개시";
+                btn.innerText = "AI 제품 원인 분석 시작";
                 btn.disabled = false;
             }
         }                
