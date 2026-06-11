@@ -11,47 +11,47 @@
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
         
         /* 왼쪽 입력 패널 */
-        .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; }                
+        .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 15px; background: #222227; overflow-y: auto; }                
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
         input, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #4a5568; background: #2d3748; color: #fff; box-sizing: border-box; width: 100%; transition: 0.2s; }                
         input:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
-        textarea { min-height: 120px; resize: none; }
+        textarea { min-height: 100px; resize: none; }
         
-        button { padding: 14px; font-size: 16px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 6px rgba(59,130,246,0.2); }                
-        button:hover { background: #2563eb; transform: translateY(-1px); }                
-        button:disabled { background: #4a5568; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.5; }
+        button { padding: 12px; font-size: 15px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }                
+        button:hover { background: #2563eb; }                
+        button:disabled { background: #4a5568; cursor: not-allowed; opacity: 0.5; }
         
-        .confirm-btn { background: #ec4899; box-shadow: 0 4px 6px rgba(236,72,153,0.3); display: none; margin-top: 5px; }
+        .search-btn { background: #6366f1; } /* 보라색 검색 버튼 */
+        .search-btn:hover { background: #4f46e5; }
+        .confirm-btn { background: #ec4899; display: none; } /* 핑크색 승인 버튼 */
         .confirm-btn:hover { background: #db2777; }
 
         /* 오른쪽 진단 대시보드 패널 */
         .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
-        .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; }
         
-        /* 상단 레이아웃 분할 구조 디자인 */
         .top-summary-zone { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
-        .image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px solid #2d3748; border-radius: 8px; overflow: hidden; position: relative; height: 150px; }
+        .image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px solid #2d3748; border-radius: 8px; overflow: hidden; height: 150px; }
         .image-card img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; line-height: 1.5; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card-title { font-size: 13px; font-weight: bold; color: #718096; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .card-title { font-size: 13px; font-weight: bold; color: #718096; margin-bottom: 8px; }
         .card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
-        
         .report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
     </style>        
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>        
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js)"></script>        
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js)"></script>
 </head>
 <body>        
     <header>                
         <h2>📱 AI Consumer Product Diagnostics & Care System</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
-            <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568; box-shadow:none;">구글 로그인</button>                
+            <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568;">구글 로그인</button>                
         </div>        
     </header>        
     <div class="main-container">                
@@ -59,29 +59,29 @@
             <h3>🔍 제품 상태 자율 진단</h3>                        
             
             <div class="input-group">
-                <label>1단계: 제품명 또는 모델 번호 입력 (입력 후 엔터 또는 바깥 클릭)</label>
-                <input type="text" id="prod-name" onblur="searchProductImage()" onchange="searchProductImage()" placeholder="예: 무선 헤드폰, 배터리, PGB-04 등">
-                
+                <label>1단계: 제품명 또는 모델 번호 입력</label>
+                <input type="text" id="prod-name" placeholder="예: 갤럭시 S25, PGB-04, 맥북 프로 등">
+                <button id="btn-search" class="search-btn" onclick="searchDeviceImage()">🔍 기기 이미지 매핑 및 검색</button>
                 <button id="btn-confirm-device" class="confirm-btn" onclick="approveDevice()">✔️ 이 제품이 맞습니다</button>
             </div>
 
             <div class="input-group">
                 <label>2단계: 발생한 이상 증상 고장 현상</label>
-                <textarea id="prod-symptom" disabled placeholder="위에서 제품을 먼저 검색하고 [이 제품이 맞습니다] 버튼을 누르면 활성화됩니다."></textarea>
+                <textarea id="prod-symptom" disabled placeholder="1단계 승인 완료 후 활성화됩니다."></textarea>
             </div>
 
-            <button id="btn-generate" disabled onclick="askAI()">AI 제품 원인 분석 시작</button>                                    
-            <button id="btn-tts" disabled onclick="speakResult()" style="background:#10b981; box-shadow: 0 4px 6px rgba(16,185,129,0.2);">🔊 엔지니어 리포트 듣기</button>                
+            <button id="btn-generate" disabled onclick="askAI()">AI 최종 결함 진단 시작</button>                                    
+            <button id="btn-tts" disabled onclick="speakResult()" style="background:#10b981;">🔊 엔지니어 리포트 듣기</button>                
         </div>                
         
         <div class="dashboard-panel">                        
             <div class="top-summary-zone">
                 <div class="image-card" id="img-container">
-                    <div class="image-placeholder" id="img-placeholder">제품명을 입력하면<br>여기에 이미지가 스캔됩니다.</div>
+                    <div class="image-placeholder" id="img-placeholder">제품을 검색하면<br>AI가 실시간 매핑합니다.</div>
                     <img id="out-img" src="" alt="제품 이미지">
                 </div>
                 
-                <div class="grid-2" style="gap: 20px;">
+                <div class="grid-2">
                     <div class="card">
                         <div class="card-title">진단 대상 제품 (Product Model)</div>
                         <div class="card-value" id="out-name">---</div>
@@ -100,7 +100,7 @@
 
             <div class="card" style="flex: 1;">
                 <div class="card-title">공학적 메커니즘 분석 (Hardware Analysis)</div>
-                <div class="report-box" id="out-analysis">제품 정보와 증상을 왼쪽에 입력하고 분석 버튼을 누르면 AI 하드웨어 정밀 분석서가 이곳에 실시간 매핑됩니다.</div>
+                <div class="report-box" id="out-analysis">기기를 먼저 확인한 후 고장 증상을 분석해 주세요.</div>
             </div>
 
             <div class="card" style="flex: 1; border-left: 5px solid #10b981;">
@@ -113,7 +113,7 @@
         const firebaseConfig = {            
             apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
             authDomain: "project-6180622403440470920.firebaseapp.com",            
-            databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
+            databaseURL: "[https://project-6180622403440470920-default-rtdb.firebaseio.com](https://project-6180622403440470920-default-rtdb.firebaseio.com)",            
             projectId: "project-6180622403440470920",            
             storageBucket: "project-6180622403440470920.firebasestorage.app",            
             messagingSenderId: "626753939152",            
@@ -122,151 +122,123 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ 본인의 웹앱 배포 주소를 정확히 기입해 주세요.
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWIFCi_YMAQNHDudLff_Fby3WN-1Rpn_1TWKwzAkVgVK9w9CPVZwv7kle4qWRIkO_p/exec";                                
+        // ⚠️ 본인의 구글 웹 앱 배포 URL 주소를 넣으세요.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRxP4SU8eMou8PIHJWYZb_8v3UqBtBdndZKstro-C50-4Iz4Vduj3TmkjXiJf4t6e4/exec";                                
         
         let currentSolutionText = ""; 
         const provider = new firebase.auth.GoogleAuthProvider();                                
         
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
-            if (!user) {
-                firebase.auth().signInWithRedirect(provider).catch(e => console.error(e));
-            } else {
-                firebase.auth().signOut();                        
-            }
+            if (!user) { firebase.auth().signInWithRedirect(provider).catch(e => console.error(e)); } 
+            else { firebase.auth().signOut(); }
         }                
         
         firebase.auth().onAuthStateChanged((user) => {                        
             const statusText = document.getElementById('user-status');                        
-            const loginBtn = document.getElementById('btn-login');                        
-            if (user) {                
-                statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; loginBtn.innerText = "로그아웃";            
-            } else {                
-                statusText.innerText = "로그인이 필요합니다."; loginBtn.innerText = "구글 로그인";            
-                document.getElementById('prod-symptom').disabled = true;
-                document.getElementById('btn-generate').disabled = true;
-            }        
+            if (user) { statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; } 
+            else { statusText.innerText = "로그인이 필요합니다."; }        
         });                
 
-        firebase.auth().getRedirectResult().catch((e) => console.error(e));
-
-        // 💡 [원천 봉쇄 패치] 람보르기니 주소를 유발하는 랜덤 변수를 완전히 도려냈습니다.
-        function searchProductImage() {
+        // 💡 [핵심 변혁] AI에게 먼저 제품의 정체와 어울리는 이미지를 물어보는 함수
+        async function searchDeviceImage() {
             const prodName = document.getElementById('prod-name').value.trim();
-            const imgEl = document.getElementById('out-img');
+            const searchBtn = document.getElementById('btn-search');
+            const confirmBtn = document.getElementById('btn-confirm-device');
             const placeholderEl = document.getElementById('img-placeholder');
-            const containerEl = document.getElementById('img-container');
-            const confirmBtn = document.getElementById('btn-confirm-device');
+            const imgEl = document.getElementById('out-img');
 
-            if (!prodName) {
-                confirmBtn.style.display = "none";
-                placeholderEl.style.display = "block";
-                placeholderEl.innerText = "제품명을 입력하면\n여기에 이미지가 스캔됩니다.";
-                imgEl.style.display = "none";
-                return;
+            if (!prodName) return alert("제품명을 입력해 주세요!");
+
+            searchBtn.innerText = "⚡ AI 기기 탐색 중...";
+            searchBtn.disabled = true;
+            placeholderEl.innerText = "AI가 해당 모델에 맞는\n이미지 카테고리를 분석 중입니다...";
+
+            // 임시로 AI에게 기기 종류가 무엇인지 파악해 오라고 요청
+            const prePrompt = `[기기 분석 요청]: 사용자가 입력한 기기명은 '${prodName}'입니다. 이 장비가 어떤 범주의 테크 장비인지 식별하여 양식에 맞춰 JSON으로 즉시 반환하세요.`;
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt: prePrompt })
+                });
+                
+                const resText = await response.text();
+                let serverData = JSON.parse(resText);
+                let jsonContent = serverData.choices[0].message.content.replace(/```json|```/gi, "").trim();
+                let aiDeviceData = JSON.parse(jsonContent);
+
+                // AI가 판별해 준 영문 키워드 추출 (예: battery, smartphone, headphones 등)
+                const keyword = aiDeviceData.image_keyword || "tech";
+                
+                // 람보르기니가 나오던 무작위 해시 주소를 버리고, 정제된 테크 전용 카테고리 기반 검색 주소 연결
+                imgEl.src = `https://images.unsplash.com/featured/300x300/?${encodeURIComponent(keyword)}`;
+                
+                imgEl.onload = function() {
+                    placeholderEl.style.display = "none";
+                    imgEl.style.display = "block";
+                    document.getElementById('out-name').innerText = aiDeviceData.product_name || prodName;
+                    searchBtn.style.display = "none"; // 검색 버튼 숨김
+                    confirmBtn.style.display = "block"; // [이 제품이 맞습니다] 노출
+                };
+
+            } catch (e) {
+                console.error(e);
+                placeholderEl.innerText = "기기 분석 실패.\n기본 테크 이미지로 대체합니다.";
+                imgEl.src = "[https://images.unsplash.com/photo-1518770660439-4636190af475?w=300](https://images.unsplash.com/photo-1518770660439-4636190af475?w=300)";
+                imgEl.onload = () => { placeholderEl.style.display = "none"; imgEl.style.display = "block"; confirmBtn.style.display = "block"; };
+            } finally {
+                searchBtn.innerText = "🔍 기기 이미지 매핑 및 검색";
+                searchBtn.disabled = false;
             }
-
-            placeholderEl.innerText = "🔍 시스템 이미지 매핑 중...";
-            const lowerName = prodName.toLowerCase();
-            
-            // 주사위 굴리기 주소를 빼버리고, 100% 확실한 고정 썸네일 경로만 지정합니다.
-            if (lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
-                // 검증된 전력 배터리 회로 공학 사진 고정
-                imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
-            } else if (lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
-                imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
-            } else if (lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
-                imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
-            } else {
-                // 매칭이 없으면 절대 다른 사진을 안 띄우고 오피셜 테크 기판 회로도만 고정으로 띄웁니다.
-                imgEl.src = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80"; 
-            }
-
-            imgEl.onload = function() {
-                placeholderEl.style.display = "none";
-                imgEl.style.display = "block";
-                containerEl.style.border = "2px solid #ec4899"; 
-                confirmBtn.style.display = "block"; 
-            };
         }
 
+        // 사용자가 최종 승인 완료했을 때 흐름
         function approveDevice() {
-            const prodName = document.getElementById('prod-name').value.trim();
-            const symptomTextArea = document.getElementById('prod-symptom');
-            const generateBtn = document.getElementById('btn-generate');
-            const containerEl = document.getElementById('img-container');
+            document.getElementById('prod-symptom').disabled = false;
+            document.getElementById('btn-generate').disabled = false;
+            
             const confirmBtn = document.getElementById('btn-confirm-device');
-            
-            document.getElementById('out-name').innerText = prodName;
-            
-            symptomTextArea.disabled = false;
-            generateBtn.disabled = false;
-            symptomTextArea.placeholder = "제품 확인 완수. 상세 증상을 기록해 주세요.";
-            symptomTextArea.focus();
-            
-            confirmBtn.innerText = "✨ 기기 승인 완료";
+            confirmBtn.innerText = "✨ 기기 확인 완료";
             confirmBtn.disabled = true;
-            containerEl.style.border = "2px solid #10b981"; 
+            document.getElementById('img-container').style.border = "3px solid #10b981";
+            document.getElementById('prod-symptom').focus();
         }
 
+        // 증상 기입 후 최종 고장 진단 실행
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
             
-            if(!prodName || !prodSymptom) return alert("데이터를 작성해 주세요.");                                    
+            if(!prodSymptom) return alert("발생한 고장 증상을 입력해 주세요!");                                    
             
             const btn = document.getElementById('btn-generate');
-            btn.innerText = "⚡ 인공지능 결함 원인 분석 중...";
+            btn.innerText = "⚡ 고장 메커니즘 정밀 진단 중...";
             btn.disabled = true;
 
-            const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
+            const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}\n위 장비와 고장 증상을 공학적으로 정밀 진단하여 규정된 JSON 포맷으로 출력하세요.`;
             
             try {                                
-                const response = await fetch(APPS_SCRIPT_URL, {                                        
-                    method: 'POST',                    
-                    body: JSON.stringify({ prompt: combinedPrompt })                                
-                });                                                                
-                
+                const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ prompt: combinedPrompt }) });                                                                
                 const responseText = await response.text();
                 let serverData = JSON.parse(responseText);
-                
-                let targetJSONText = "";
-                if (serverData.choices && serverData.choices[0] && serverData.choices[0].message) {
-                    targetJSONText = serverData.choices[0].message.content;
-                } else {
-                    targetJSONText = responseText;
-                }
+                let targetJSONText = serverData.choices[0].message.content.replace(/```json|```/gi, "").trim();
 
-                targetJSONText = targetJSONText.replace(/```json|```/gi, "").trim();
-
-                let aiData;
-                try {
-                    aiData = JSON.parse(targetJSONText);
-                } catch(e) {
-                    aiData = {
-                        product_name: prodName,
-                        danger_level: "🟡 주의 (Caution)",
-                        main_cause: "회로 이상 및 하드웨어 결함 추정",
-                        analysis: targetJSONText,
-                        solution: "장치의 전원을 차단하고 공식 서비스 센터 방문을 권장합니다."
-                    };
-                }
+                let aiData = JSON.parse(targetJSONText);
                 
-                document.getElementById('out-name').innerText = aiData.product_name || prodName;
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
                 document.getElementById('out-cause').innerText = aiData.main_cause || "---";
-                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 내용 없음";
+                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 실패";
                 document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
                 document.getElementById('btn-tts').disabled = false;
-                currentSolutionText = (aiData.analysis || "") + " 이어서 권장 조치 사항입니다. " + (aiData.solution || "");
+                currentSolutionText = (aiData.analysis || "") + " 이어서 조치 사항입니다. " + (aiData.solution || "");
                 speakResult();                                
             } catch (error) {                                
                 console.error(error);                                
                 document.getElementById('out-analysis').innerText = `⚠️ 에러 발생: ${error.message}`;                        
             } finally {
-                btn.innerText = "AI 제품 원인 분석 시작";
+                btn.innerText = "AI 최종 결함 진단 시작";
                 btn.disabled = false;
             }
         }                
