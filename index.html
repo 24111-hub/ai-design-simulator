@@ -3,42 +3,17 @@
 <head>        
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 스마트 제품 고장 진단 시스템</title>            
-    <style>                
-        body { margin: 0; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1e; color: #e2e8f0; }                
-        header { background: #111115; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; }                
-        h2 { margin: 0; font-size: 20px; color: #3b82f6; }
-        .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
-        
-        .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; overflow-y: auto; }                
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
-        input, textarea { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #4a5568; background: #2d3748; color: #fff; box-sizing: border-box; width: 100%; }                
-        textarea { min-height: 120px; resize: none; }
-        
-        button { padding: 14px; font-size: 16px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }                
-        button:hover { background: #2563eb; }                
-        
-        .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
-        .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; }
-        
-        .top-summary-zone { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
-        .image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px solid #2d3748; border-radius: 8px; overflow: hidden; height: 150px; }
-        .image-card img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card-title { font-size: 13px; font-weight: bold; color: #718096; margin-bottom: 8px; }
-        .card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
-        .report-box { line-height: 1.7; font-size: 15px; color: #cbd5e0; white-space: pre-wrap; }
-    </style>        
+    <title>AI 스마트 제품 고장 진단 및 케어 시스템</title>            
+    
+    <link rel="stylesheet" href="style.css">
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>        
     <header>                
-        <h2>📱 AI Consumer Product Diagnostics System</h2>                
+        <h2>📱 AI Consumer Product Diagnostics & Care System</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
             <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568;">구글 로그인</button>                
@@ -46,29 +21,25 @@
     </header>        
     <div class="main-container">                
         <div class="input-panel">                        
-            <h3>🔍 고장 진단 접수</h3>                        
-            
+            <h3>🔍 원스톱 고장 진단 의뢰</h3>                        
             <div class="input-group">
                 <label>제품명 또는 모델 번호</label>
-                <input type="text" id="prod-name" placeholder="예: 갤럭시 S25, PGB-04, 맥북 프로">
+                <input type="text" id="prod-name" placeholder="예: 갤럭시 S25, PGB-04, 맥북 프로 등">
             </div>
-
             <div class="input-group">
-                <label>발생한 이상 증상</label>
-                <textarea id="prod-symptom" placeholder="예: 충전 시 과열 현상이 발생하고 불이 안 들어옵니다."></textarea>
+                <label>발생한 고장 현상 및 이상 증상</label>
+                <textarea id="prod-symptom" placeholder="예: 기기가 너무 뜨거워지고 충전기 인식이 안 됩니다."></textarea>
             </div>
-
             <button id="btn-generate" onclick="askAI()">AI 제품 원인 분석 시작</button>                                    
-            <button id="btn-tts" disabled onclick="speakResult()" style="background:#10b981;">🔊 리포트 듣기</button>                
+            <button id="btn-tts" disabled onclick="speakResult()" style="background:#10b981;">🔊 엔지니어 리포트 음성 브리핑</button>                
         </div>                
         
         <div class="dashboard-panel">                        
             <div class="top-summary-zone">
-                <div class="image-card">
-                    <div class="image-placeholder" id="img-placeholder">진단 시작 시<br>이미지가 표시됩니다.</div>
+                <div class="image-card" id="img-container">
+                    <div class="image-placeholder" id="img-placeholder">제품명과 증상을 쓰고<br>분석을 시작해 주세요.</div>
                     <img id="out-img" src="" alt="제품 이미지">
                 </div>
-                
                 <div class="grid-2">
                     <div class="card">
                         <div class="card-title">진단 대상 제품 (Product Model)</div>
@@ -80,113 +51,21 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card">
                 <div class="card-title">하드웨어적 추정 원인 (Root Cause)</div>
                 <div class="card-value" id="out-cause" style="color: #f59e0b; font-size: 18px;">---</div>
             </div>
-
             <div class="card" style="flex: 1;">
                 <div class="card-title">공학적 메커니즘 분석 (Hardware Analysis)</div>
-                <div class="report-box" id="out-analysis">분석 결과가 여기에 표시됩니다.</div>
+                <div class="report-box" id="out-analysis">대시보드가 실시간 대기 중입니다.</div>
             </div>
-
             <div class="card" style="flex: 1; border-left: 5px solid #10b981;">
-                <div class="card-title" style="color: #10b981;">권장 조치 가이드라인 (Recommended Action)</div>
+                <div class="card-title" style="color: #10b981;">권장 조치 및 안전 가이드라인 (Recommended Action)</div>
                 <div class="report-box" id="out-solution">---</div>
             </div>
         </div>        
     </div>        
-    <script>                
-        const firebaseConfig = {            
-            apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
-            authDomain: "project-6180622403440470920.firebaseapp.com",            
-            databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
-            projectId: "project-6180622403440470920",            
-            storageBucket: "project-6180622403440470920.firebasestorage.app",            
-            messagingSenderId: "626753939152",            
-            appId: "1:626753939152:web:485e286ff8e5b596bf20d5",            
-            measurementId: "G-QMSFMGJG0J"        
-        };                
-        firebase.initializeApp(firebaseConfig);                                
-        
-        // ⚠️ 여기에 새로 배포하신 본인의 구글 웹앱 URL을 꼭 붙여넣으세요!
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxNDsegsBsGsbtC2HZGtJV640rlAz6p8a6GLVjLJ_icQHOX8CAj7SYvbPOgsy7WdN4/exec";                                
-        
-        let currentSolutionText = ""; 
-        const provider = new firebase.auth.GoogleAuthProvider();                                
-        
-        function toggleLogin() {                        
-            const user = firebase.auth().currentUser;                        
-            if (!user) { firebase.auth().signInWithRedirect(provider).catch(e => console.error(e)); } 
-            else { firebase.auth().signOut(); }
-        }                
-        
-        firebase.auth().onAuthStateChanged((user) => {                        
-            const statusText = document.getElementById('user-status');                        
-            if (user) { statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; } 
-            else { statusText.innerText = "로그인이 필요합니다."; }        
-        });                
 
-        async function askAI() {                        
-            const prodName = document.getElementById('prod-name').value.trim();
-            const prodSymptom = document.getElementById('prod-symptom').value.trim();
-            
-            if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 모두 입력해 주세요!");                                    
-            
-            const btn = document.getElementById('btn-generate');
-            btn.innerText = "⚡ 뇌파 분석 및 하드웨어 진단 중...";
-            btn.disabled = true;
-
-            const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}\n위 장비 정보를 진단하여 규칙에 맞는 JSON 포맷으로 응답하세요.`;
-            
-            try {                                
-                const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ prompt: combinedPrompt }) });                                                                
-                const responseText = await response.text();
-                let serverData = JSON.parse(responseText);
-                
-                let targetJSONText = (serverData.choices && serverData.choices[0] && serverData.choices[0].message) ? serverData.choices[0].message.content : responseText;
-                targetJSONText = targetJSONText.replace(/```json|```/gi, "").trim();
-                
-                let aiData = JSON.parse(targetJSONText);
-                
-                // 데이터 매pping
-                document.getElementById('out-name').innerText = aiData.product_name || prodName;
-                document.getElementById('out-level').innerText = aiData.danger_level || "---";
-                document.getElementById('out-cause').innerText = aiData.main_cause || "---";
-                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 실패";
-                document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
-                
-                // 이미지 매핑 처리 (안전한 무료 목업 이미지 서버 연동)
-                const imgEl = document.getElementById('out-img');
-                const placeholderEl = document.getElementById('img-placeholder');
-                const keyword = aiData.image_keyword || "electronics";
-                
-                imgEl.src = `https://images.unsplash.com/featured/300x300/?${encodeURIComponent(keyword)}`;
-                imgEl.onload = function() {
-                    placeholderEl.style.display = "none";
-                    imgEl.style.display = "block";
-                };
-
-                document.getElementById('btn-tts').disabled = false;
-                currentSolutionText = (aiData.analysis || "") + " 조치 사항입니다. " + (aiData.solution || "");
-                speakResult();                                
-            } catch (error) {                                
-                console.error(error);                                
-                document.getElementById('out-analysis').innerText = `⚠️ 시스템 연동 에러: ${error.message}\n구글 앱스 스크립트 배포 주소 및 API 키를 다시 확인해 주세요.`;                        
-            } finally {
-                btn.innerText = "AI 제품 원인 분석 시작";
-                btn.disabled = false;
-            }
-        }                
-
-        function speakResult() {                        
-            if (!currentSolutionText) return;                                    
-            window.speechSynthesis.cancel();                         
-            const utterance = new SpeechSynthesisUtterance(currentSolutionText);                        
-            utterance.lang = 'ko-KR';                        
-            window.speechSynthesis.speak(utterance);                
-        }                
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
