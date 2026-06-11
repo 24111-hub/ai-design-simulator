@@ -10,7 +10,7 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-const APPS_SCRIPT_URL = "https://script.google.com/a/macros/daehyun.hs.kr/s/AKfycbxoZkf72ZmVZrEqzuZBQv74AMNaCEUzF-dUP8fRpSr4zejJleRMexD6Eds6Ux2QcH01/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2ALtkD-lHa9ysedzOU8VJKFcTAiyT2BYhl0baq98bj5bYo2o7YGQE6d3rUL8mXcXW/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
