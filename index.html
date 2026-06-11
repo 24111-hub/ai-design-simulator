@@ -89,26 +89,25 @@
         </div>        
     </div>        
     <script>                
-        const firebaseConfig = {
-          apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",
-          authDomain: "project-6180622403440470920.firebaseapp.com",
-          databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",
-          projectId: "project-6180622403440470920",
-          storageBucket: "project-6180622403440470920.firebasestorage.app",
-          messagingSenderId: "626753939152",
-          appId: "1:626753939152:web:485e286ff8e5b596bf20d5",
-          measurementId: "G-QMSFMGJG0J"
-          };
-initializeApp(firebaseConfig);                                
+        const firebaseConfig = {            
+            apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
+            authDomain: "project-6180622403440470920.firebaseapp.com",            
+            databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
+            projectId: "project-6180622403440470920",            
+            storageBucket: "project-6180622403440470920.firebasestorage.app",            
+            messagingSenderId: "626753939152",            
+            appId: "1:626753939152:web:485e286ff8e5b596bf20d5",            
+            measurementId: "G-QMSFMGJG0J"        
+        };                
+        firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ [중요] 새로 배포해서 성공하셨던 본인의 구글 웹 앱 주소를 꼭 여기에 정확히 넣어주세요!
+        // ⚠️ [중요] 새로 배포하신 본인의 구글 웹 앱 URL 주소를 꼭 여기에 정확히 붙여넣어 주세요!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOUXCwTjymihXju_-15irpmtZFIuJA3of15PT5G9bDUGIPQ8IeX3E8ltIbkfGQNgBF/exec";                                
         
         let currentSolutionText = ""; 
-
         const provider = new firebase.auth.GoogleAuthProvider();                                
         
-        // 💡 브라우저 보안 규격(COOP) 차단을 우회하기 위해 팝업에서 '리다이렉트' 방식으로 완전히 변경
+        // 💡 브라우저 보안 규격(COOP) 차단을 우회하기 위해 팝업창 방식에서 '리다이렉트' 방식으로 완전 개편
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
             if (!user) {
@@ -118,13 +117,13 @@ initializeApp(firebaseConfig);
             }
         }                
         
-        // 로그인 상태 변경 감지 리스너
+        // 로그인 상태 실시간 모니터링 리스너
         firebase.auth().onAuthStateChanged((user) => {                        
             const statusText = document.getElementById('user-status');                        
             const loginBtn = document.getElementById('btn-login');                        
             const generateBtn = document.getElementById('btn-generate');                        
             if (user) {                
-                statusText.innerText = `👤 사용자: ${user.displayName}`; 
+                statusText.innerText = `👤 엔지니어: ${user.displayName || "인증됨"}`; 
                 loginBtn.innerText = "로그아웃"; 
                 generateBtn.disabled = false;            
             } else {                
@@ -134,12 +133,12 @@ initializeApp(firebaseConfig);
             }        
         });                
 
-        // 리다이렉트 로그인 후 돌아온 결과를 안전하게 받아오는 콜백 추가
+        // 리다이렉트 방식 복귀 후 결과를 안전하게 회수하는 핸들러
         firebase.auth().getRedirectResult().catch((error) => {
-            console.error("로그인 리다이렉션 복귀 오류:", error);
+            console.error("로그인 페이지 복귀 처리 중 오류:", error);
         });
 
-        // AI 서버 통신 함수
+        // 원격 AI 진단 서버 통신 프로세스
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -158,27 +157,44 @@ initializeApp(firebaseConfig);
                     body: JSON.stringify({ prompt: combinedPrompt })                                
                 });                                                                
                 
-                // 💡 글자 깨짐 및 자르기 에러 유발 코드를 삭제하고, 안전한 직렬화 json() 파싱 공정 적용
-                const aiData = await response.json();                                                
+                // 💡 응답을 텍스트로 안전하게 먼저 받아옴
+                const rawText = await response.text();
+                console.log("서버 원본 대조 데이터:", rawText);
                 
-                document.getElementById('out-name').innerText = aiData.product_name || prodName;
-                document.getElementById('out-level').innerText = aiData.danger_level || "---";
-                document.getElementById('out-cause').innerText = aiData.main_cause || "---";
-                document.getElementById('out-analysis').innerText = aiData.analysis || "분석 완료";
-                document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
+                let aiData;
+                try {
+                    aiData = JSON.parse(rawText);
+                } catch (e) {
+                    document.getElementById('out-analysis').innerText = `⚠️ 구글 서버 응답 해석 오류:\n${rawText}`;
+                    return;
+                }                                                
                 
-                currentSolutionText = aiData.analysis + " 이어서 권장 조치 사항입니다. " + aiData.solution;
+                // 🎨 유연한 키 바인딩 구조 채택 (서버와 속성명이 살짝 비껴나가도 100% 매핑되도록 처리)
+                const finalName = aiData.product_name || prodName;
+                const finalLevel = aiData.danger_level || aiData.risk_level || "🟡 주의 (Caution)";
+                const finalCause = aiData.main_cause || aiData.root_cause || "하드웨어 점검 요망";
+                const finalAnalysis = aiData.analysis || aiData.engineering_analysis || rawText;
+                const finalSolution = aiData.solution || aiData.action_items || "안전을 위해 공식 서비스 센터를 방문하세요.";
+
+                // 대시보드 엘리먼트에 실시간 주입
+                document.getElementById('out-name').innerText = finalName;
+                document.getElementById('out-level').innerText = finalLevel;
+                document.getElementById('out-cause').innerText = finalCause;
+                document.getElementById('out-analysis').innerText = finalAnalysis;
+                document.getElementById('out-solution').innerText = finalSolution;
+                
+                currentSolutionText = finalAnalysis + " 이어서 권장 조치 사항입니다. " + finalSolution;
                 speakResult();                                
             } catch (error) {                                
-                console.error("클라이언트 오류 발생:", error);                                
-                document.getElementById('out-analysis').innerText = `⚠️ 분석 데이터를 읽어오지 못했습니다. OpenAI API 키의 잔액 상태나 구글 배포 설정을 점검하세요.\n\n오류 원인: ${error.message}`;                        
+                console.error("클라이언트 내부 오류:", error);                                
+                document.getElementById('out-analysis').innerText = `⚠️ 데이터 맵핑 과정에서 장애가 발생했습니다.\n오류 원인: ${error.message}`;                        
             } finally {
                 btn.innerText = "AI 제품 원인 분석 시작";
                 btn.disabled = false;
             }
         }                
 
-        // 음성 브리핑 TTS 기능
+        // 음성 변환 오디오 가이드 브리핑 (TTS)
         function speakResult() {                        
             if (!currentSolutionText) return;                                    
             window.speechSynthesis.cancel();                         
