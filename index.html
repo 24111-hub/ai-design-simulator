@@ -4,9 +4,7 @@
     <meta charset="UTF-8">        
     <meta name="viewport" content="width=device-width, initial-scale=1.0">        
     <title>AI 스마트 제품 고장 진단 및 케어 시스템</title>            
-    
     <link rel="stylesheet" href="style.css">
-
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -16,7 +14,7 @@
         <h2>📱 AI Consumer Product Diagnostics & Care System</h2>                
         <div>                        
             <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
-            <button id="btn-login" onclick="toggleLogin()" style="padding: 7px 15px; font-size: 13px; background:#4a5568;">구글 로그인</button>                
+            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>                
         </div>        
     </header>        
     <div class="main-container">                
@@ -31,7 +29,7 @@
                 <textarea id="prod-symptom" placeholder="예: 기기가 너무 뜨거워지고 충전기 인식이 안 됩니다."></textarea>
             </div>
             <button id="btn-generate" onclick="askAI()">AI 제품 원인 분석 시작</button>                                    
-            <button id="btn-tts" disabled onclick="speakResult()" style="background:#10b981;">🔊 엔지니어 리포트 음성 브리핑</button>                
+            <button id="btn-tts" disabled onclick="speakResult()">🔊 엔지니어 리포트 음성 브리핑</button>                
         </div>                
         
         <div class="dashboard-panel">                        
@@ -65,7 +63,6 @@
             </div>
         </div>        
     </div>        
-
     <script src="app.js"></script>
 </body>
 </html>
