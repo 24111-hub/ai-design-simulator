@@ -55,8 +55,8 @@
         <div class="input-panel">                        
             <h3>🔍 제품 상태 자율 진단</h3>                        
             <div class="input-group">
-                <label>제품명 또는 모델 번호</label>
-                <input type="text" id="prod-name" placeholder="예: 무선 헤드폰, 맥세이프 보조배터리, 조립형 PC 등">
+                <label>제품명 또는 모델 번호 (입력 후 바깥 클릭 시 이미지 미리보기)</label>
+                <input type="text" id="prod-name" onblur="previewProductImage()" onchange="previewProductImage()" placeholder="예: 무선 헤드폰, 맥세이프 보조배터리, PGB-04 등">
             </div>
             <div class="input-group">
                 <label>발생한 이상 증상 고장 현상</label>
@@ -70,7 +70,7 @@
             
             <div class="top-summary-zone">
                 <div class="image-card" id="img-container">
-                    <div class="image-placeholder" id="img-placeholder">스캔 대기중<br>(분석 시 로드)</div>
+                    <div class="image-placeholder" id="img-placeholder">제품명을 입력하면<br>여기에 이미지가 스캔됩니다.</div>
                     <img id="out-img" src="" alt="제품 이미지">
                 </div>
                 
@@ -115,7 +115,7 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ [중요] 질문자님의 구글 웹 앱 URL 주소로 아래 공란을 반드시 채워주세요.
+        // ⚠️ [필수] 구글 앱스 스크립트 URL 배포 주소를 기입하세요.
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyneq8ZFiBqUQBtjXxCZM0BQaJKs3DNSMgk3UHDkwbRq9dw24Hg_6tMka4Ugtkl9LiP/exec";                                
         
         let currentSolutionText = ""; 
@@ -124,7 +124,7 @@
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
             if (!user) {
-                firebase.auth().signInWithRedirect(provider).catch(e => console.error("로그인 시도 실패:", e));
+                firebase.auth().signInWithRedirect(provider).catch(e => console.error(e));
             } else {
                 firebase.auth().signOut();                        
             }
@@ -143,6 +143,54 @@
 
         firebase.auth().getRedirectResult().catch((e) => console.error(e));
 
+        // 💡 [핵심 추가] 문제 입력 이전에 제품명만 보고 이미지를 미리 검증/매핑해 주는 선행 함수
+        function previewProductImage() {
+            const prodName = document.getElementById('prod-name').value.trim();
+            const imgEl = document.getElementById('out-img');
+            const placeholderEl = document.getElementById('img-placeholder');
+            const containerEl = document.getElementById('img-container');
+            const nameDisplayEl = document.getElementById('out-name');
+
+            if (!prodName) {
+                placeholderEl.style.display = "block";
+                placeholderEl.innerText = "제품명을 입력하면\n여기에 이미지가 스캔됩니다.";
+                imgEl.style.display = "none";
+                imgEl.src = "";
+                nameDisplayEl.innerText = "---";
+                return;
+            }
+
+            // 실시간 상단 정보 선바인딩
+            nameDisplayEl.innerText = prodName;
+
+            const lowerName = prodName.toLowerCase();
+            let hasValidImage = false;
+
+            // 엄격한 매핑 조건문 실행
+            if (lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
+                imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
+                hasValidImage = true;
+            } else if (lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
+                imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
+                hasValidImage = true;
+            } else if (lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
+                imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
+                hasValidImage = true;
+            }
+
+            if (hasValidImage) {
+                placeholderEl.style.display = "none";
+                imgEl.style.display = "block";
+                containerEl.style.border = "1px solid #3b82f6"; // 매칭 성공 시 파란 테두리 활성화
+            } else {
+                placeholderEl.style.display = "block";
+                placeholderEl.innerText = "🔍 제품 데이터군\n이미지 없음";
+                imgEl.style.display = "none";
+                imgEl.src = "";
+                containerEl.style.border = "1px solid #4a5568";
+            }
+        }
+
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -152,17 +200,6 @@
             const btn = document.getElementById('btn-generate');
             btn.innerText = "⚡ 인공지능 결함 원인 분석 중...";
             btn.disabled = true;
-            
-            const imgEl = document.getElementById('out-img');
-            const placeholderEl = document.getElementById('img-placeholder');
-            const containerEl = document.getElementById('img-container');
-            
-            // 상태 초기화
-            placeholderEl.style.display = "block";
-            placeholderEl.innerText = "⏳ 스캔 매핑 중...";
-            imgEl.style.display = "none";
-            imgEl.src = "";
-            containerEl.style.border = "1px solid #3b82f6";
 
             const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
             
@@ -197,47 +234,17 @@
                     };
                 }
                 
-                // 데이터 대시보드 뷰 매핑
-                const finalName = aiData.product_name || prodName;
-                document.getElementById('out-name').innerText = finalName;
+                // 데이터 대시보드 뷰 매핑 (이미지는 위에 정의된 preview 함수가 이미 띄워놓은 상태 유지)
+                document.getElementById('out-name').innerText = aiData.product_name || prodName;
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
                 document.getElementById('out-cause').innerText = aiData.main_cause || "---";
                 document.getElementById('out-analysis').innerText = aiData.analysis || "분석 내용 없음";
                 document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
-                // 💡 [엄격한 이미지 매핑 규칙 정의]
-                const lowerName = finalName.toLowerCase();
-                let hasValidImage = false;
-
-                // 조건이 명확히 맞을 때만 특정 오피셜 고해상도 테크 이미지 매핑
-                if (lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
-                    imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
-                    hasValidImage = true;
-                } else if (lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
-                    imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
-                    hasValidImage = true;
-                } else if (lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
-                    imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
-                    hasValidImage = true;
-                }
-
-                // 💡 조건에 맞지 않는 기기명이면 랜덤 사진을 띄우지 않고 "스캔 이미지 없음"으로 깔끔하게 처리
-                if (hasValidImage) {
-                    placeholderEl.style.display = "none";
-                    imgEl.style.display = "block";
-                } else {
-                    placeholderEl.style.display = "block";
-                    placeholderEl.innerText = "🔍 제품 데이터군\n이미지 없음";
-                    imgEl.style.display = "none";
-                }
-                
-                containerEl.style.border = "1px solid #2d3748";
-
                 currentSolutionText = (aiData.analysis || "") + " 이어서 권장 조치 사항입니다. " + (aiData.solution || "");
                 speakResult();                                
             } catch (error) {                                
                 console.error(error);                                
-                placeholderEl.innerText = "❌ 로드 실패";
                 document.getElementById('out-analysis').innerText = `⚠️ 데이터를 해석하는 도중 오류가 발생했습니다.\n이유: ${error.message}`;                        
             } finally {
                 btn.innerText = "AI 제품 원인 분석 시작";
