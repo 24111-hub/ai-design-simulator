@@ -10,6 +10,7 @@
         h2 { margin: 0; font-size: 20px; letter-spacing: -0.5px; color: #3b82f6; }
         .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }                
         
+        /* 왼쪽 입력 패널 */
         .input-panel { width: 35%; padding: 25px; box-sizing: border-box; border-right: 1px solid #2d3748; display: flex; flex-direction: column; gap: 20px; background: #222227; }                
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         .input-group label { font-size: 14px; font-weight: bold; color: #a0aec0; }
@@ -21,10 +22,17 @@
         button:hover { background: #2563eb; transform: translateY(-1px); }                
         button:disabled { background: #4a5568; cursor: not-allowed; transform: none; box-shadow: none; }
         
+        /* 오른쪽 진단 대시보드 패널 */
         .dashboard-panel { width: 65%; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: #151518; }                
         .card { background: #1f1f23; border-radius: 8px; padding: 20px; border: 1px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
+        /* 상단 레이아웃 분할 구조 디자인 */
+        .top-summary-zone { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
+        .image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px dashed #4a5568; border-radius: 8px; overflow: hidden; position: relative; height: 150px; }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card-title { font-size: 13px; font-weight: bold; color: #718096; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
         .card-value { font-size: 22px; font-weight: bold; color: #edf2f7; }
         
@@ -59,14 +67,22 @@
         </div>                
         
         <div class="dashboard-panel">                        
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-title">진단 대상 제품 (Product Model)</div>
-                    <div class="card-value" id="out-name">---</div>
+            
+            <div class="top-summary-zone">
+                <div class="image-card" id="img-container">
+                    <div class="image-placeholder" id="img-placeholder">스캔 대기중<br>(분석 시 로드)</div>
+                    <img id="out-img" src="" alt="제품 이미지">
                 </div>
-                <div class="card">
-                    <div class="card-title">안전 위험 등급 (Safety Risk)</div>
-                    <div class="card-value" id="out-level">---</div>
+                
+                <div class="grid-2" style="gap: 20px;">
+                    <div class="card">
+                        <div class="card-title">진단 대상 제품 (Product Model)</div>
+                        <div class="card-value" id="out-name">---</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">안전 위험 등급 (Safety Risk)</div>
+                        <div class="card-value" id="out-level">---</div>
+                    </div>
                 </div>
             </div>
             
@@ -99,7 +115,7 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ [필수] 구글 앱스 스크립트 배포 주소를 대입하세요!
+        // ⚠️ [중요] 질문자님의 구글 웹 앱 URL 주소로 아래 공란을 채우셔야 404가 뜨지 않습니다!
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbtetRJEQdoBJ-MJwtnCCfArjmR_hnYOgFcexOzFUkEesUx3qNi32Cm4niU9lktPF/exec";                                
         
         let currentSolutionText = ""; 
@@ -108,7 +124,7 @@
         function toggleLogin() {                        
             const user = firebase.auth().currentUser;                        
             if (!user) {
-                firebase.auth().signInWithRedirect(provider).catch(e => console.error(e));
+                firebase.auth().signInWithRedirect(provider).catch(e => console.error("로그인 시도 실패:", e));
             } else {
                 firebase.auth().signOut();                        
             }
@@ -127,7 +143,6 @@
 
         firebase.auth().getRedirectResult().catch((e) => console.error(e));
 
-        // 💡 OpenAI 원본 응답 구조를 완벽하게 분해하고 이중 파싱하는 보정 알고리즘
         async function askAI() {                        
             const prodName = document.getElementById('prod-name').value;
             const prodSymptom = document.getElementById('prod-symptom').value;
@@ -138,6 +153,15 @@
             btn.innerText = "⚡ 인공지능 결함 원인 분석 중...";
             btn.disabled = true;
             
+            // 📸 제품 키워드 기반으로 오픈소스 썸네일 이미지를 동적으로 로드 및 바인딩 시키는 로직 추가
+            const imgEl = document.getElementById('out-img');
+            const placeholderEl = document.getElementById('img-placeholder');
+            const containerEl = document.getElementById('img-container');
+            
+            placeholderEl.innerText = "⏳ 스캔 매핑 중...";
+            imgEl.style.display = "none";
+            containerEl.style.border = "1px solid #3b82f6";
+
             const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
             
             try {                                
@@ -149,7 +173,6 @@
                 const responseText = await response.text();
                 let serverData = JSON.parse(responseText);
                 
-                // 1단계 안전 장치: OpenAI API가 보낸 통째 객체 구조인지 필터링
                 let targetJSONText = "";
                 if (serverData.choices && serverData.choices[0] && serverData.choices[0].message) {
                     targetJSONText = serverData.choices[0].message.content;
@@ -157,15 +180,12 @@
                     targetJSONText = responseText;
                 }
 
-                // 마크다운 잔재(```json ) 전처리 정리
                 targetJSONText = targetJSONText.replace(/```json|```/gi, "").trim();
 
-                // 2단계 안전 장치: 알맹이 내용 파싱 시도
                 let aiData;
                 try {
                     aiData = JSON.parse(targetJSONText);
                 } catch(e) {
-                    // 순수 JSON 형식이 아닐 경우 통합 가공 맵핑
                     aiData = {
                         product_name: prodName,
                         danger_level: "🟡 주의 (Caution)",
@@ -175,17 +195,37 @@
                     };
                 }
                 
-                // 🎨 최종 뷰 데이터 바인딩
-                document.getElementById('out-name').innerText = aiData.product_name || prodName;
+                // 🎨 데이터 대시보드 뷰 매핑
+                const finalName = aiData.product_name || prodName;
+                document.getElementById('out-name').innerText = finalName;
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
                 document.getElementById('out-cause').innerText = aiData.main_cause || "---";
                 document.getElementById('out-analysis').innerText = aiData.analysis || "분석 내용 없음";
                 document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
+                // 📸 이미지 바인딩 마무리: 입력된 기기 이름을 기반으로 매칭율이 높은 대표 가전 썸네일 추출
+                imgEl.src = `https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=300&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&sig=${encodeURIComponent(finalName)}`;
+                // 만약 입력값에 특정 키워드가 있다면 최적화된 이미지 분류 매핑 시도
+                const lowerName = finalName.toLowerCase();
+                if(lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
+                    imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
+                } else if(lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
+                    imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
+                } else if(lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
+                    imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
+                } else if(lowerName.includes("키보드") || lowerName.includes("마우스")) {
+                    imgEl.src = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80";
+                }
+                
+                placeholderEl.style.display = "none";
+                imgEl.style.display = "block";
+                containerEl.style.border = "1px solid #2d3748";
+
                 currentSolutionText = (aiData.analysis || "") + " 이어서 권장 조치 사항입니다. " + (aiData.solution || "");
                 speakResult();                                
             } catch (error) {                                
                 console.error(error);                                
+                placeholderEl.innerText = "❌ 로드 실패";
                 document.getElementById('out-analysis').innerText = `⚠️ 데이터를 해석하는 도중 오류가 발생했습니다.\n이유: ${error.message}`;                        
             } finally {
                 btn.innerText = "AI 제품 원인 분석 시작";
