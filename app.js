@@ -18,10 +18,7 @@ const provider = new firebase.auth.GoogleAuthProvider();
 function toggleLogin() {                        
     const user = firebase.auth().currentUser;                        
     if (!user) { 
-        firebase.auth().signInWithPopup(provider).catch(e => {
-            console.error(e);
-            alert("구글 팝업 차단을 해제하거나 승인 도메인을 확인해 주세요.");
-        }); 
+        firebase.auth().signInWithPopup(provider).catch(e => console.error(e)); 
     } else { 
         firebase.auth().signOut(); 
     }
@@ -39,23 +36,26 @@ firebase.auth().onAuthStateChanged((user) => {
     }        
 });                
 
-function applyProductImage(prodName, aiKeyword) {
+// 💡 [핵심] PGB-04 정밀 조준 이미지 저격 로직
+function applyProductImage(prodName) {
     const imgEl = document.getElementById('out-img');
     const placeholderEl = document.getElementById('img-placeholder');
-    const combinedText = (prodName + " " + (aiKeyword || "")).toLowerCase();
+    const nameStr = prodName.toLowerCase();
     
+    // 기본 회로 기판 이미지
     let targetUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80"; 
 
-    if (combinedText.includes("pgb") || combinedText.includes("배터리") || combinedText.includes("battery") || combinedText.includes("cell")) {
-        targetUrl = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=400&auto=format&fit=crop&q=80"; 
-    } else if (combinedText.includes("갤럭시") || combinedText.includes("s25") || combinedText.includes("폰") || combinedText.includes("phone") || combinedText.includes("아이폰")) {
+    // 사용자가 PGB-04를 입력하면 연보라색 보조배터리 고해상도 고정 매핑
+    if (nameStr.includes("pgb") || nameStr.includes("pgb-04")) {
+        targetUrl = "https://images.unsplash.com/photo-1701047463132-094155b9ccfc?w=400&auto=format&fit=crop&q=80"; 
+    } 
+    // 갤럭시 S25 및 일반 스마트폰 기종 처리
+    else if (nameStr.includes("갤럭시") || nameStr.includes("s25") || nameStr.includes("폰") || nameStr.includes("iphone")) {
         targetUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80"; 
-    } else if (combinedText.includes("맥북") || combinedText.includes("노트북") || combinedText.includes("laptop") || combinedText.includes("computer")) {
+    } 
+    // 노트북 및 PC 기종 처리
+    else if (nameStr.includes("맥북") || nameStr.includes("노트북") || nameStr.includes("laptop")) {
         targetUrl = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80"; 
-    } else if (combinedText.includes("헤드폰") || combinedText.includes("이어폰") || combinedText.includes("audio") || combinedText.includes("headphone")) {
-        targetUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80"; 
-    } else if (combinedText.includes("모니터") || combinedText.includes("디스플레이") || combinedText.includes("display")) {
-        targetUrl = "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&auto=format&fit=crop&q=80"; 
     }
 
     imgEl.src = targetUrl;
@@ -98,14 +98,15 @@ async function askAI() {
         document.getElementById('out-analysis').innerText = aiData.analysis || "분석 데이터를 파싱할 수 없습니다.";
         document.getElementById('out-solution').innerText = aiData.solution || "조치 지침 가이드라인 부재";
         
-        applyProductImage(prodName, aiData.image_keyword);
+        // 입력값 기준 이미지 세팅 작동
+        applyProductImage(prodName);
 
         document.getElementById('btn-tts').disabled = false;
         currentSolutionText = (aiData.analysis || "") + " 이어서 엔지니어 권장 가이드라인입니다. " + (aiData.solution || "");
         speakResult();                                
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerText = `⚠️ 연동 오류 발생: ${error.message}`;                        
+        document.getElementById('out-analysis').innerText = `⚠️ 시스템 연동 에러가 발생했습니다: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
