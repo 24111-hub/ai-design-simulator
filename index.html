@@ -30,7 +30,7 @@
         .top-summary-zone { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
         .image-card { display: flex; justify-content: center; align-items: center; background: #111115; border: 1px dashed #4a5568; border-radius: 8px; overflow: hidden; position: relative; height: 150px; }
         .image-card img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; }
+        .image-placeholder { font-size: 12px; color: #718096; text-align: center; padding: 10px; line-height: 1.5; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card-title { font-size: 13px; font-weight: bold; color: #718096; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
@@ -115,8 +115,8 @@
         };                
         firebase.initializeApp(firebaseConfig);                                
         
-        // ⚠️ [중요] 질문자님의 구글 웹 앱 URL 주소로 아래 공란을 채우셔야 404가 뜨지 않습니다!
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw09G1bBp1xWtX3O07EPBbR7V4jonma_uM_U1sqkVkz27G7Y7iY0f0S_TEtrEd9T2KR/exec";                                
+        // ⚠️ [중요] 질문자님의 구글 웹 앱 URL 주소로 아래 공란을 반드시 채워주세요.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyneq8ZFiBqUQBtjXxCZM0BQaJKs3DNSMgk3UHDkwbRq9dw24Hg_6tMka4Ugtkl9LiP/exec";                                
         
         let currentSolutionText = ""; 
         const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -153,13 +153,15 @@
             btn.innerText = "⚡ 인공지능 결함 원인 분석 중...";
             btn.disabled = true;
             
-            // 📸 제품 키워드 기반으로 오픈소스 썸네일 이미지를 동적으로 로드 및 바인딩 시키는 로직 추가
             const imgEl = document.getElementById('out-img');
             const placeholderEl = document.getElementById('img-placeholder');
             const containerEl = document.getElementById('img-container');
             
+            // 상태 초기화
+            placeholderEl.style.display = "block";
             placeholderEl.innerText = "⏳ 스캔 매핑 중...";
             imgEl.style.display = "none";
+            imgEl.src = "";
             containerEl.style.border = "1px solid #3b82f6";
 
             const combinedPrompt = `[대상 장비]: ${prodName}\n[고장 증상]: ${prodSymptom}`;
@@ -195,7 +197,7 @@
                     };
                 }
                 
-                // 🎨 데이터 대시보드 뷰 매핑
+                // 데이터 대시보드 뷰 매핑
                 const finalName = aiData.product_name || prodName;
                 document.getElementById('out-name').innerText = finalName;
                 document.getElementById('out-level').innerText = aiData.danger_level || "---";
@@ -203,22 +205,32 @@
                 document.getElementById('out-analysis').innerText = aiData.analysis || "분석 내용 없음";
                 document.getElementById('out-solution').innerText = aiData.solution || "지침 없음";
                 
-                // 📸 이미지 바인딩 마무리: 입력된 기기 이름을 기반으로 매칭율이 높은 대표 가전 썸네일 추출
-                imgEl.src = `https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=300&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&sig=${encodeURIComponent(finalName)}`;
-                // 만약 입력값에 특정 키워드가 있다면 최적화된 이미지 분류 매핑 시도
+                // 💡 [엄격한 이미지 매핑 규칙 정의]
                 const lowerName = finalName.toLowerCase();
-                if(lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
+                let hasValidImage = false;
+
+                // 조건이 명확히 맞을 때만 특정 오피셜 고해상도 테크 이미지 매핑
+                if (lowerName.includes("배터리") || lowerName.includes("battery") || lowerName.includes("pgb")) {
                     imgEl.src = "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=300&auto=format&fit=crop&q=80";
-                } else if(lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
+                    hasValidImage = true;
+                } else if (lowerName.includes("헤드") || lowerName.includes("이어폰") || lowerName.includes("소니")) {
                     imgEl.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80";
-                } else if(lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
+                    hasValidImage = true;
+                } else if (lowerName.includes("컴퓨터") || lowerName.includes("pc") || lowerName.includes("노트북")) {
                     imgEl.src = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&auto=format&fit=crop&q=80";
-                } else if(lowerName.includes("키보드") || lowerName.includes("마우스")) {
-                    imgEl.src = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80";
+                    hasValidImage = true;
+                }
+
+                // 💡 조건에 맞지 않는 기기명이면 랜덤 사진을 띄우지 않고 "스캔 이미지 없음"으로 깔끔하게 처리
+                if (hasValidImage) {
+                    placeholderEl.style.display = "none";
+                    imgEl.style.display = "block";
+                } else {
+                    placeholderEl.style.display = "block";
+                    placeholderEl.innerText = "🔍 제품 데이터군\n이미지 없음";
+                    imgEl.style.display = "none";
                 }
                 
-                placeholderEl.style.display = "none";
-                imgEl.style.display = "block";
                 containerEl.style.border = "1px solid #2d3748";
 
                 currentSolutionText = (aiData.analysis || "") + " 이어서 권장 조치 사항입니다. " + (aiData.solution || "");
