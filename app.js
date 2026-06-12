@@ -13,7 +13,7 @@ firebase.initializeApp(firebaseConfig);
 
 // 2. 구글 앱스 스크립트 웹앱 배포 URL
 // 🚨 방금 구글에서 '새 버전' 배포 후 복사해 온 최종 /exec 주소를 여기에 정밀 업데이트 하세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpvmVKVPLpu-BZxlGMW814MVNDpBrD_O9rUs-zMJxaSJ513t8ZDYTvMwHtlpbATcma/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlfhxQBit7Yp5EtbiMV0SiCMY0sXFlMFKdyK44KNLCsOJzokgZWYF8-dFGG8_JK_eq/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
