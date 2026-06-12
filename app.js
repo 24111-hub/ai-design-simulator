@@ -10,7 +10,7 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 [새 버전 배포] 후 나온 URL을 여기에 붙여넣으세요!
+// 🚨 구글 [새 버전 배포] 후 새로 발급받은 웹 앱 URL을 여기에 붙여넣으세요!
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQzmy0k_lu5YYO9x1YQok8c46LMvf2xJL-ibkNxtoYYHWU8OjUPYved89ybymGjTDo/exec";                                
 
 let currentSolutionText = ""; 
@@ -41,7 +41,7 @@ async function askAI() {
     if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 입력하세요!");                                    
     
     const btn = document.getElementById('btn-generate');
-    btn.innerText = "⚡ 제미나이 공학 연산 중...";
+    btn.innerText = "⚡ ChatGPT 엔진 연산 고속 가동 중...";
     btn.disabled = true;
     
     try {                                
@@ -51,60 +51,34 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 에러: ${response.status}`);
+        if (!response.ok) throw new Error(`서버 응답 오류 (코드: ${response.status})`);
 
         const rawText = await response.text();
         
-        // 💡 텍스트 줄바꿈 파싱 알고리즘 기동 (JSON 파싱 에러 원천 차단)
-        const lines = rawText.split('\n');
-        let data = { name: prodName, level: "주의", cause: "분석 완료", analysis: rawText, solution: "안전에 유의하세요." };
-
-        lines.forEach(line => {
-            if(line.startsWith("제품명:")) data.name = line.replace("제품명:", "").trim();
-            if(line.startsWith("위험등급:")) data.level = line.replace("위험등급:", "").trim();
-            if(line.startsWith("추정원인:")) data.cause = line.replace("추정원인:", "").trim();
-            if(line.startsWith("공학분석:")) data.analysis = line.replace("공학분석:", "").trim();
-            if(line.startsWith("권장조치:")) data.solution = line.replace("권장조치:", "").trim();
-        });
-
-        // HTML 대시보드 화면 연동
-        document.getElementById('out-name').innerText = data.name;
+        // 💡 텍스트만 직관적으로 대시보드 화면에 매핑
+        document.getElementById('out-name').innerText = prodName;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = data.level;
-        if (data.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (data.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
-        else { levelEl.style.color = "#10b981"; }
+        levelEl.innerText = "진단 완료";
+        levelEl.style.color = "#10b981"; // 초록색 안전망
 
-        document.getElementById('out-cause').innerText = data.cause;
-        // 만약 정밀 분리가 안 되었다면 원본 통째로 출력되도록 안전 장치 적용
-        document.getElementById('out-analysis').innerText = data.analysis.length > 5 ? data.analysis : rawText;
-        document.getElementById('out-solution').innerText = data.solution;
+        document.getElementById('out-cause').innerText = "하단 정밀 정비 리포트 참조";
         
-        applyProductImage(prodName);
+        // 메인 텍스트 영역에 통째로 깔끔하게 보고서 주입
+        document.getElementById('out-analysis').innerText = rawText;
+        document.getElementById('out-solution').innerText = "정밀 진단이 완료되었습니다. 위 리포트의 조치사항에 따르십시오.";
+        
+        // 💡 이미지 처리 함수(applyProductImage) 호출을 완전히 삭제하여 로딩 에러 원천 차단
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = document.getElementById('out-analysis').innerText + " 이어서 안전 조치 가이드입니다. " + data.solution;
+        currentSolutionText = rawText;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 통신 프로토콜 에러</span><br><br>내용: ${error.message}`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 통신 모듈 오류</span><br><br>내용: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
     }
-}
-
-function applyProductImage(prodName) {
-    const imgEl = document.getElementById('out-img');
-    const placeholderEl = document.getElementById('img-placeholder');
-    const searchKeyword = encodeURIComponent(prodName.trim() + " hardware");
-    let targetUrl = `https://images.unsplash.com/featured/400x400/?${searchKeyword}`;
-
-    imgEl.src = targetUrl;
-    imgEl.onload = function() {
-        placeholderEl.style.display = "none";
-        imgEl.style.display = "block";
-    };
 }
 
 function speakResult() {                        
