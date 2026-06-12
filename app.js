@@ -11,7 +11,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);                                
 
 // 🚨 구글 [새 버전 배포] 후 나온 URL을 여기에 붙여넣으세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygRof4S0IjgrYLDEj5EOrcbqSY0F5SNytEj5gMWLoQH2zqwrQAljNIh77sXEWWhSfK/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQzmy0k_lu5YYO9x1YQok8c46LMvf2xJL-ibkNxtoYYHWU8OjUPYved89ybymGjTDo/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
