@@ -10,8 +10,8 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 스크립트 '새 버전 배포' 후 주소를 여기에 정확하게 붙여넣으세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuDT_BLusO2A9tuQfTMDDY-Aof1bvbBg19heQfI6N9-D3Il8CniBDR1_3-7PaEvQSl/exec";                                
+// 🚨 구글 새 배포 주소를 여기에 넣어주세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQkCpODPGA8XoQMP5AU5td7n7W_OwrjKF0rMH6VzaiTO0E-kYZVmNjm2VM30DF3Obq/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -41,7 +41,7 @@ async function askAI() {
     if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 입력하세요!");                                    
     
     const btn = document.getElementById('btn-generate');
-    btn.innerText = "⚡ 제미나이 공학 연산 중...";
+    btn.innerText = "⚡ 제미나이 분석 엔진 연산 중...";
     btn.disabled = true;
     
     try {                                
@@ -51,42 +51,31 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 통신 실패: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP 에러: ${response.status}`);
 
-        const rawText = await response.text();
+        const responseText = await response.text();
+        const aiData = JSON.parse(responseText.trim());
         
-        // 원시 텍스트 줄바꿈 분석 매핑 파서 기동
-        let lines = rawText.split('\n');
-        let data = { name: prodName, level: "주의", cause: "원인 분석 완료", analysis: rawText, solution: "안전에 유의하세요." };
-
-        lines.forEach(line => {
-            if(line.startsWith("진단제품:")) data.name = line.replace("진단제품:", "").trim();
-            if(line.startsWith("위험등급:")) data.level = line.replace("위험등급:", "").trim();
-            if(line.startsWith("추정원인:")) data.cause = line.replace("추정원인:", "").trim();
-            if(line.startsWith("공학분석:")) data.analysis = line.replace("공학분석:", "").trim();
-            if(line.startsWith("권장조치:")) data.solution = line.replace("권장조치:", "").trim();
-        });
-
-        // 대시보드 인터페이스 최종 렌더링
-        document.getElementById('out-name').innerText = data.name;
+        // 화면 대시보드 연동
+        document.getElementById('out-name').innerText = aiData.product_name || prodName;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = data.level;
-        if (data.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (data.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
+        levelEl.innerText = aiData.danger_level || "주의";
+        if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
+        else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = data.cause;
-        document.getElementById('out-analysis').innerText = data.analysis.length > 5 ? data.analysis : rawText;
-        document.getElementById('out-solution').innerText = data.solution;
+        document.getElementById('out-cause').innerText = aiData.main_cause || "분석 완료";
+        document.getElementById('out-analysis').innerText = aiData.analysis;
+        document.getElementById('out-solution').innerText = aiData.solution;
         
         applyProductImage(prodName);
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = document.getElementById('out-analysis').innerText + " 이어서 안전 조치 가이드입니다. " + data.solution;
+        currentSolutionText = aiData.analysis + " 이어서 추천 조치사항입니다. " + aiData.solution;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 터미널 예외 복구 완료</span><br><br>내용: ${error.message}`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 데이터 바인딩 예외</span><br><br>내용: 새로고침 후 다시 시도하세요.`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
