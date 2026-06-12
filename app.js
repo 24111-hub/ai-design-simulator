@@ -1,6 +1,6 @@
 const firebaseConfig = {            
     apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
-    authDomain: "project-6180622403440470920.firebaseapp.com",            
+    authDomain: "project- project-6180622403440470920.firebaseapp.com",            
     databaseURL: "https://project-6180622403440470920-default-rtdb.firebaseio.com",            
     projectId: "project-6180622403440470920",            
     storageBucket: "project-6180622403440470920.firebasestorage.app",            
@@ -10,8 +10,8 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 [새 버전 배포] 후 새로 발급받은 웹 앱 URL을 여기에 붙여넣으세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQzmy0k_lu5YYO9x1YQok8c46LMvf2xJL-ibkNxtoYYHWU8OjUPYved89ybymGjTDo/exec";                                
+// 🚨 구글 [새 버전 배포]를 진행한 뒤 새로 취득한 exec 웹 앱 주소를 꼭 여기에 붙여넣으세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmgR_ALiEFidmbXDIadM0S2BukQ8QgfT1iAkS9PgSzROuvBbFovpufGZVhSKZFFCD9/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -41,7 +41,7 @@ async function askAI() {
     if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 입력하세요!");                                    
     
     const btn = document.getElementById('btn-generate');
-    btn.innerText = "⚡ ChatGPT 엔진 연산 고속 가동 중...";
+    btn.innerText = "⚡ 연산 및 데이터 수신 중...";
     btn.disabled = true;
     
     try {                                
@@ -51,30 +51,29 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`서버 응답 오류 (코드: ${response.status})`);
+        if (!response.ok) throw new Error(`네트워크 응답 규격 이상 (코드: ${response.status})`);
 
         const rawText = await response.text();
         
-        // 💡 텍스트만 직관적으로 대시보드 화면에 매핑
+        // 데이터 인터페이스 매핑 및 화면 출력
         document.getElementById('out-name').innerText = prodName;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = "진단 완료";
-        levelEl.style.color = "#10b981"; // 초록색 안전망
+        levelEl.innerText = "주의 / 진단완료";
+        levelEl.style.color = "#f59e0b"; 
 
-        document.getElementById('out-cause').innerText = "하단 정밀 정비 리포트 참조";
+        document.getElementById('out-cause').innerText = "하단 정밀 정비 분석 리포트 참조";
         
-        // 메인 텍스트 영역에 통째로 깔끔하게 보고서 주입
+        // 메인 리포트 공간에 데이터 삽입
         document.getElementById('out-analysis').innerText = rawText;
-        document.getElementById('out-solution').innerText = "정밀 진단이 완료되었습니다. 위 리포트의 조치사항에 따르십시오.";
+        document.getElementById('out-solution').innerText = "정밀 진단서가 생성되었습니다. 지침에 따라 안전 정비를 수행하십시오.";
         
-        // 💡 이미지 처리 함수(applyProductImage) 호출을 완전히 삭제하여 로딩 에러 원천 차단
         document.getElementById('btn-tts').disabled = false;
         currentSolutionText = rawText;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 통신 모듈 오류</span><br><br>내용: ${error.message}`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 시스템 통신 예외 발생</span><br><br>내용: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
