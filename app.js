@@ -10,8 +10,8 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 앱스 스크립트 '새 버전 배포' 후 주소를 여기에 붙여넣으세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKRazpW6c24NfxOg0xUpJYlTwUP8lnloPG6a05jDhXa9GZArX-_uZRKzF0jypfQ1XO/exec";                                
+// 🚨 구글 새 버전 배포 후 주소를 여기에 업데이트해 주세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVidw8By6FDRtlbQ4HXyzKDN4Sdcey3-MpIPrLEptl-lEZilxAKLjaUH1c62mttJwA/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -51,45 +51,33 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 에러 발생: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP 통신 실패: ${response.status}`);
 
-        const rawText = await response.text();
+        const responseText = await response.text();
         
-        // 💡 안전망 처리: 데이터가 비어있거나 불완전해도 터지지 않도록 방어합니다.
-        if (!rawText || !rawText.includes('||')) {
-            throw new Error("구글 서버 응답 전달 유실 (잠시 후 다시 시도)");
-        }
+        // 받아온 데이터를 정식 JSON으로 깨끗하게 변환합니다.
+        const aiData = JSON.parse(responseText.trim());
 
-        const parts = rawText.split('||');
-        
-        let result = {
-            name: parts[0] ? parts[0].trim() : prodName,
-            level: parts[1] ? parts[1].trim() : "주의",
-            cause: parts[2] ? parts[2].trim() : "분석 완료",
-            analysis: parts[3] ? parts[3].trim() : rawText,
-            solution: parts[4] ? parts[4].trim() : "안전에 유의하십시오."
-        };
-
-        // UI 대시보드 최종 주입
-        document.getElementById('out-name').innerText = result.name;
+        // 대시보드 UI 바인딩
+        document.getElementById('out-name').innerText = aiData.product_name || prodName;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = result.level;
-        if (result.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (result.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
+        levelEl.innerText = aiData.danger_level || "주의";
+        if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
+        else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = result.cause;
-        document.getElementById('out-analysis').innerText = result.analysis;
-        document.getElementById('out-solution').innerText = result.solution;
+        document.getElementById('out-cause').innerText = aiData.main_cause || "분석 완료";
+        document.getElementById('out-analysis').innerText = aiData.analysis || responseText;
+        document.getElementById('out-solution').innerText = aiData.solution || "안전에 주의하십시오.";
         
         applyProductImage(prodName);
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = result.analysis + " 이어서 권장 조치사항입니다. " + result.solution;
+        currentSolutionText = (aiData.analysis || responseText) + " 이어서 정비 가이드 조치사항입니다. " + (aiData.solution || "");
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 시스템 리트라이 통신 성공</span><br><br>현상: 데이터 흐름이 일시적으로 지연되었습니다. 버튼을 다시 한번 눌러주세요.`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 실시간 데이터 수신 지연</span><br><br>구글 스크립트 수정본이 아직 웹상에 반영되지 않았거나 캐시가 남아있을 수 있습니다. 잠시 후 버튼을 다시 한 번 눌러보세요.`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
