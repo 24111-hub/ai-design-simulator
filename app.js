@@ -5,13 +5,13 @@ const firebaseConfig = {
     projectId: "project-6180622403440470920",            
     storageBucket: "project-6180622403440470920.firebasestorage.app",            
     messagingSenderId: "626753939152",            
-    appId: "1:626753939152:web:485e286ff8e5b596bf20d5",            
+    appId: "1:626753939152:web:485e286ff8e5b596bf20d5",            ㅁ
     measurementId: "G-QMSFMGJG0J"        
 };                
 firebase.initializeApp(firebaseConfig);                                
 
 // 🚨 구글 앱스 스크립트 '새 버전 배포' 후 생성된 새 웹 앱 URL을 반드시 여기에 붙여넣으세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZ-xnO1RceNiw8FqMicxAWaRu19RL4wmG2UwfO3mfGgAaMSXOA3NtfBU_OYPlPZPfR/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzdoMbkMrJ9TX3YtzeRlF3oN8mcdWmgUQfQBseJXIvQPySTaaZ9Cta_iXQzQyMGNmY/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
