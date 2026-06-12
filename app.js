@@ -10,8 +10,8 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 새 배포 주소를 여기에 넣어주세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9snYOlSZ5YSyTD-C9_AsQd3YbZGpfJtNtKXe14A7OLa0OXa3SqaS7zHJmJUzqPzsi/exec";                                
+// 🚨 구글 앱스 스크립트 '새 버전 배포' 후 획득한 주소를 여기에 꼭 업데이트하세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOBYoNRvxu3oXoJpyoBzFcwVTiF1EV4trcmQ0KMT7ru6PoRUDLkiOpjvdSjSaltMtH/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -41,7 +41,7 @@ async function askAI() {
     if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 입력하세요!");                                    
     
     const btn = document.getElementById('btn-generate');
-    btn.innerText = "⚡ 제미나이 분석 엔진 연산 중...";
+    btn.innerText = "⚡ 제미나이 공학 연산 중...";
     btn.disabled = true;
     
     try {                                
@@ -51,31 +51,41 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 에러: ${response.status}`);
+        if (!response.ok) throw new Error(`통신 에러: ${response.status}`);
 
-        const responseText = await response.text();
-        const aiData = JSON.parse(responseText.trim());
+        const rawText = await response.text();
         
-        // 화면 대시보드 연동
-        document.getElementById('out-name').innerText = aiData.product_name || prodName;
+        // 💡 텍스트를 '||' 기호 기준으로 쪼개어 각각 배열에 할당합니다.
+        const parts = rawText.split('||');
+        
+        let result = {
+            name: parts[0] ? parts[0].trim() : prodName,
+            level: parts[1] ? parts[1].trim() : "주의",
+            cause: parts[2] ? parts[2].trim() : "분석 완료",
+            analysis: parts[3] ? parts[3].trim() : rawText,
+            solution: parts[4] ? parts[4].trim() : "안전에 유의하십시오."
+        };
+
+        // UI 바인딩 처리
+        document.getElementById('out-name').innerText = result.name;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = aiData.danger_level || "주의";
-        if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
+        levelEl.innerText = result.level;
+        if (result.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
+        else if (result.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = aiData.main_cause || "분석 완료";
-        document.getElementById('out-analysis').innerText = aiData.analysis;
-        document.getElementById('out-solution').innerText = aiData.solution;
+        document.getElementById('out-cause').innerText = result.cause;
+        document.getElementById('out-analysis').innerText = result.analysis;
+        document.getElementById('out-solution').innerText = result.solution;
         
         applyProductImage(prodName);
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = aiData.analysis + " 이어서 추천 조치사항입니다. " + aiData.solution;
+        currentSolutionText = result.analysis + " 이어서 권장 조치사항입니다. " + result.solution;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 데이터 바인딩 예외</span><br><br>내용: 새로고침 후 다시 시도하세요.`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 터미널 예외 복구</span><br><br>내용: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
