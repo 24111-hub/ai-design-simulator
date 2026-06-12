@@ -12,7 +12,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);                                
 
 // 2. 구글 앱스 스크립트 웹앱 배포 URL
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxanb5NACIlA5gTBP_tWQEnNit8aricLULyMDpn3yFMMUWzYogw3aE3kIPVPTjet9Ht/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrJ8h5yCEhAKSLE7RFsF2kNnGRl_QxtHKqR-WZ8WBLXGNX7oO0Zr7gwygoCP283fRA/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
