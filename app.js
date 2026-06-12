@@ -11,7 +11,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);                                
 
 // 🚨 구글 앱스 스크립트 [새 버전 배포] 후 새로 발급받은 /exec 주소를 여기에 교체하세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwszAxo3va7a6jIPkFnltiAx6wwk0LgePO13TZCIYbQ-oNM53zdSZmgjDC8__0y2cYN/exec";                                
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGKbxZ3thALVr18qaFOE0oLHYkc1VuMJ-WeLlKBFAJKL11m8cD-LV6xzKGlnzDZvO6/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
