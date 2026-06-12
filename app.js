@@ -10,19 +10,16 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 앱스 스크립트 주소 (그대로 유지)
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEiW6Eibj0CjJKM1OHdNMnpM3x4kdHHOljuZ69HR8JBAuOTB-s50iXmNpZ16kpJ6u3/exec";                                
+// 🚨 구글 스크립트 '새 버전 배포' 후 주소를 여기에 정확하게 붙여넣으세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuDT_BLusO2A9tuQfTMDDY-Aof1bvbBg19heQfI6N9-D3Il8CniBDR1_3-7PaEvQSl/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
 
 function toggleLogin() {                        
     const user = firebase.auth().currentUser;                        
-    if (!user) { 
-        firebase.auth().signInWithPopup(provider).catch(e => console.error(e)); 
-    } else { 
-        firebase.auth().signOut(); 
-    }
+    if (!user) { firebase.auth().signInWithPopup(provider).catch(e => console.error(e)); } 
+    else { firebase.auth().signOut(); }
 }                
 
 firebase.auth().onAuthStateChanged((user) => {                        
@@ -44,61 +41,52 @@ async function askAI() {
     if(!prodName || !prodSymptom) return alert("제품명과 고장 증상을 입력하세요!");                                    
     
     const btn = document.getElementById('btn-generate');
-    btn.innerText = "⚡ 하드웨어 결함 연산 중...";
+    btn.innerText = "⚡ 제미나이 공학 연산 중...";
     btn.disabled = true;
     
     try {                                
-        // 데이터 전송 레이어를 깔끔하게 구조화하여 송신
         const response = await fetch(APPS_SCRIPT_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-            body: JSON.stringify({
-                name: prodName,
-                symptom: prodSymptom
-            }) 
+            body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 에러: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP 통신 실패: ${response.status}`);
 
-        const responseText = await response.text();
-        let cleanText = responseText.trim();
+        const rawText = await response.text();
+        
+        // 원시 텍스트 줄바꿈 분석 매핑 파서 기동
+        let lines = rawText.split('\n');
+        let data = { name: prodName, level: "주의", cause: "원인 분석 완료", analysis: rawText, solution: "안전에 유의하세요." };
 
-        // 마크다운 태그 청소
-        cleanText = cleanText.replace(/```json|```/gi, "").trim();
-        
-        let aiData;
-        try {
-            aiData = JSON.parse(cleanText);
-        } catch (e) {
-            aiData = {
-                product_name: prodName,
-                danger_level: "주의",
-                main_cause: "분석 데이터 매핑 완료",
-                analysis: cleanText, 
-                solution: "장치의 전원을 안전하게 차단하십시오."
-            };
-        }
-        
-        document.getElementById('out-name').innerText = aiData.product_name || prodName;
+        lines.forEach(line => {
+            if(line.startsWith("진단제품:")) data.name = line.replace("진단제품:", "").trim();
+            if(line.startsWith("위험등급:")) data.level = line.replace("위험등급:", "").trim();
+            if(line.startsWith("추정원인:")) data.cause = line.replace("추정원인:", "").trim();
+            if(line.startsWith("공학분석:")) data.analysis = line.replace("공학분석:", "").trim();
+            if(line.startsWith("권장조치:")) data.solution = line.replace("권장조치:", "").trim();
+        });
+
+        // 대시보드 인터페이스 최종 렌더링
+        document.getElementById('out-name').innerText = data.name;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = aiData.danger_level || "주의";
-        if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
+        levelEl.innerText = data.level;
+        if (data.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
+        else if (data.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = aiData.main_cause || "회로 스트레스 누적 의심";
-        document.getElementById('out-analysis').innerText = aiData.analysis || cleanText;
-        document.getElementById('out-solution').innerText = aiData.solution || "안전 가이드라인을 참조하세요.";
+        document.getElementById('out-cause').innerText = data.cause;
+        document.getElementById('out-analysis').innerText = data.analysis.length > 5 ? data.analysis : rawText;
+        document.getElementById('out-solution').innerText = data.solution;
         
         applyProductImage(prodName);
-
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = (aiData.analysis || cleanText) + " 이어서 조치 가이드입니다. " + (aiData.solution || "");
+        currentSolutionText = document.getElementById('out-analysis').innerText + " 이어서 안전 조치 가이드입니다. " + data.solution;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ [통신 처리 오류]</span><br><br>메시지: ${error.message}`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 터미널 예외 복구 완료</span><br><br>내용: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
@@ -108,13 +96,8 @@ async function askAI() {
 function applyProductImage(prodName) {
     const imgEl = document.getElementById('out-img');
     const placeholderEl = document.getElementById('img-placeholder');
-    const searchKeyword = encodeURIComponent(prodName.trim() + " device");
-    
-    let targetUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80"; 
-
-    if (prodName.trim()) {
-        targetUrl = `https://images.unsplash.com/featured/400x400/?${searchKeyword}`;
-    }
+    const searchKeyword = encodeURIComponent(prodName.trim() + " hardware");
+    let targetUrl = `https://images.unsplash.com/featured/400x400/?${searchKeyword}`;
 
     imgEl.src = targetUrl;
     imgEl.onload = function() {
