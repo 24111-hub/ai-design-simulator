@@ -1,4 +1,4 @@
-// [데이터 1] 유저님의 고유 파이어베이스 설정 데이터
+// 1. Firebase 환경 설정 정보
 const firebaseConfig = {            
     apiKey: "AIzaSyDzkv4MyzI1RF9KRPyerJywEtLv427T6DE",            
     authDomain: "project-6180622403440470920.firebaseapp.com",            
@@ -11,12 +11,13 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// [데이터 2] 유저님의 최신 구글 웹앱 배포 주소 데이터
+// 2. 구글 앱스 스크립트 웹앱 배포 URL
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpvmVKVPLpu-BZxlGMW814MVNDpBrD_O9rUs-zMJxaSJ513t8ZDYTvMwHtlpbATcma/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
 
+// 3. 구글 로그인/로그아웃 토글 제어 함수
 function toggleLogin() {                        
     const user = firebase.auth().currentUser;                        
     if (!user) { 
@@ -26,6 +27,7 @@ function toggleLogin() {
     }
 }                
 
+// 4. Firebase 인증 상태 변화 감지 리스너
 firebase.auth().onAuthStateChanged((user) => {                        
     const statusText = document.getElementById('user-status');                        
     const loginBtn = document.getElementById('btn-login');                        
@@ -38,7 +40,7 @@ firebase.auth().onAuthStateChanged((user) => {
     }        
 });                
 
-// [데이터 3] 누락되었던 핵심 연동 및 데이터 매핑 함수 본문
+// 5. AI 연동 및 실시간 대시보드 데이터 바인딩 함수
 async function askAI() {                        
     const prodName = document.getElementById('prod-name').value.trim();
     const prodSymptom = document.getElementById('prod-symptom').value.trim();
@@ -70,7 +72,7 @@ async function askAI() {
         const responseText = await response.text();
         let cleanText = responseText.trim();
 
-        // 마크다운 잔여 기호 청소
+        // OpenAI 가공 마크다운 태그 청소
         cleanText = cleanText.replace(/```json|```/gi, "").trim();
         
         let aiData;
@@ -86,7 +88,7 @@ async function askAI() {
             };
         }
         
-        // 대시보드 데이터 바인딩
+        // UI 요소 데이터 안전 매핑 (undefined 현상 방지)
         document.getElementById('out-name').innerText = aiData.product_name || prodName;
         
         const levelEl = document.getElementById('out-level');
@@ -95,10 +97,11 @@ async function askAI() {
         else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = aiData.main_cause || "충전 회로 부하 의심";
+        document.getElementById('out-cause').innerText = aiData.main_cause || "하드웨어 계통 과부하 의심";
         document.getElementById('out-analysis').innerText = aiData.analysis || cleanText;
-        document.getElementById('out-solution').innerText = aiData.solution || "안전 가이드라인을 참조하세요.";
+        document.getElementById('out-solution').innerText = aiData.solution || "원인 분석 조치 가이드라인을 참조하세요.";
         
+        // ✨ 동적 키워드 이미지 검색 함수 호출
         applyProductImage(prodName);
 
         document.getElementById('btn-tts').disabled = false;
@@ -113,30 +116,36 @@ async function askAI() {
     }
 }
 
-// 🎨 제품 이미지 매핑 로직
+// 6. ✨ [개선] Unsplash 소스를 이용한 제품 맞춤형 동적 이미지 매핑 함수
 function applyProductImage(prodName) {
     const imgEl = document.getElementById('out-img');
     const placeholderEl = document.getElementById('img-placeholder');
-    const nameStr = prodName.toLowerCase();
     
+    // 유저가 입력한 제품명을 안전하게 인코딩하고, 전자기기 관련 이미지가 매칭되도록 가이드 키워드 추가
+    const searchKeyword = encodeURIComponent(prodName.trim() + " tech electronics device");
+    
+    // 기본 대기용 이미지 (검색 실패 시 백업용)
     let targetUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80"; 
 
-    if (nameStr.includes("pgb") || nameStr.includes("배터리")) {
-        targetUrl = "https://images.unsplash.com/photo-1701047463132-094155b9ccfc?w=400&auto=format&fit=crop&q=80"; 
-    } else if (nameStr.includes("갤럭시") || nameStr.includes("s25") || nameStr.includes("폰")) {
-        targetUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80"; 
-    } else if (nameStr.includes("맥북") || nameStr.includes("노트북")) {
-        targetUrl = "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80"; 
+    if (prodName.trim()) {
+        // Unsplash API 키 없이 실시간으로 키워드 무작위 매칭 사진을 가져오는 고화질 소스 URL 활용
+        targetUrl = `https://images.unsplash.com/featured/400x400/?${searchKeyword}`;
     }
 
+    // 브라우저가 이미지 로드를 완료하면 플레이스홀더를 숨기고 사진을 보여줌
     imgEl.src = targetUrl;
     imgEl.onload = function() {
         placeholderEl.style.display = "none";
         imgEl.style.display = "block";
     };
+    
+    // 이미지 로드 실패 시 기본 칩셋 이미지로 롤백 안전장치
+    imgEl.onerror = function() {
+        imgEl.src = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80";
+    };
 }
 
-// 🔊 음성 브리핑 로직
+// 7. 엔지니어 리포트 TTS 음성 안내 함수
 function speakResult() {                        
     if (!currentSolutionText) return;                                                                    
     window.speechSynthesis.cancel();                         
