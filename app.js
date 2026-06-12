@@ -10,8 +10,8 @@ const firebaseConfig = {
 };                
 firebase.initializeApp(firebaseConfig);                                
 
-// 🚨 구글 새 버전 배포 후 주소를 여기에 업데이트해 주세요!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVidw8By6FDRtlbQ4HXyzKDN4Sdcey3-MpIPrLEptl-lEZilxAKLjaUH1c62mttJwA/exec";                                
+// 🚨 구글 [새 버전 배포] 후 나온 URL을 여기에 붙여넣으세요!
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygRof4S0IjgrYLDEj5EOrcbqSY0F5SNytEj5gMWLoQH2zqwrQAljNIh77sXEWWhSfK/exec";                                
 
 let currentSolutionText = ""; 
 const provider = new firebase.auth.GoogleAuthProvider();                                
@@ -51,33 +51,43 @@ async function askAI() {
             body: JSON.stringify({ name: prodName, symptom: prodSymptom }) 
         });                                                                
         
-        if (!response.ok) throw new Error(`HTTP 통신 실패: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP 에러: ${response.status}`);
 
-        const responseText = await response.text();
+        const rawText = await response.text();
         
-        // 받아온 데이터를 정식 JSON으로 깨끗하게 변환합니다.
-        const aiData = JSON.parse(responseText.trim());
+        // 💡 텍스트 줄바꿈 파싱 알고리즘 기동 (JSON 파싱 에러 원천 차단)
+        const lines = rawText.split('\n');
+        let data = { name: prodName, level: "주의", cause: "분석 완료", analysis: rawText, solution: "안전에 유의하세요." };
 
-        // 대시보드 UI 바인딩
-        document.getElementById('out-name').innerText = aiData.product_name || prodName;
+        lines.forEach(line => {
+            if(line.startsWith("제품명:")) data.name = line.replace("제품명:", "").trim();
+            if(line.startsWith("위험등급:")) data.level = line.replace("위험등급:", "").trim();
+            if(line.startsWith("추정원인:")) data.cause = line.replace("추정원인:", "").trim();
+            if(line.startsWith("공학분석:")) data.analysis = line.replace("공학분석:", "").trim();
+            if(line.startsWith("권장조치:")) data.solution = line.replace("권장조치:", "").trim();
+        });
+
+        // HTML 대시보드 화면 연동
+        document.getElementById('out-name').innerText = data.name;
         
         const levelEl = document.getElementById('out-level');
-        levelEl.innerText = aiData.danger_level || "주의";
-        if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
-        else if (levelEl.innerText.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
+        levelEl.innerText = data.level;
+        if (data.level.includes("위험")) { levelEl.style.color = "#ef4444"; } 
+        else if (data.level.includes("주의")) { levelEl.style.color = "#f59e0b"; } 
         else { levelEl.style.color = "#10b981"; }
 
-        document.getElementById('out-cause').innerText = aiData.main_cause || "분석 완료";
-        document.getElementById('out-analysis').innerText = aiData.analysis || responseText;
-        document.getElementById('out-solution').innerText = aiData.solution || "안전에 주의하십시오.";
+        document.getElementById('out-cause').innerText = data.cause;
+        // 만약 정밀 분리가 안 되었다면 원본 통째로 출력되도록 안전 장치 적용
+        document.getElementById('out-analysis').innerText = data.analysis.length > 5 ? data.analysis : rawText;
+        document.getElementById('out-solution').innerText = data.solution;
         
         applyProductImage(prodName);
         document.getElementById('btn-tts').disabled = false;
-        currentSolutionText = (aiData.analysis || responseText) + " 이어서 정비 가이드 조치사항입니다. " + (aiData.solution || "");
+        currentSolutionText = document.getElementById('out-analysis').innerText + " 이어서 안전 조치 가이드입니다. " + data.solution;
                                        
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 실시간 데이터 수신 지연</span><br><br>구글 스크립트 수정본이 아직 웹상에 반영되지 않았거나 캐시가 남아있을 수 있습니다. 잠시 후 버튼을 다시 한 번 눌러보세요.`;                        
+        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ 통신 프로토콜 에러</span><br><br>내용: ${error.message}`;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
