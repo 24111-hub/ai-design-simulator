@@ -1,45 +1,48 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>        
-    <meta charset="UTF-8">        
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-    <title>AI 스마트 제품 고장 진단 및 케어 시스템</title>            
-    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 스마트 제품 고장 진단 및 케어 시스템</title>
     <link rel="stylesheet" href="style.css">
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>        
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>        
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        /* 긴 텍스트 리포트가 깨지지 않고 엔터(줄바꿈)가 그대로 먹히도록 스타일 보정 */
+        #out-analysis {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
 </head>
-<body>        
-    <header>                
-        <h2>📱 AI Consumer Product Diagnostics & Care System</h2>                
-        <div>                        
-            <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인이 필요합니다.</span>                        
-            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>                
-        </div>        
-    </header>        
-    <div class="main-container">                
-        <div class="input-panel">                        
-            <h3>🔍 원스톱 고장 진단 의뢰</h3>                        
+<body>
+    <header>
+        <h2>📊 AI Consumer Product Diagnostics & Care System</h2>
+        <div>
+            <span id="user-status" style="margin-right: 15px; color: #a0aec0; font-size: 14px;">로그인 대기 중...</span>
+            <button id="btn-login" onclick="toggleLogin()">구글 로그인</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="input-panel">
+            <h3>🔍 원스톱 고장 진단 의뢰</h3>
             <div class="input-group">
                 <label>제품명 또는 모델 번호</label>
-                <input type="text" id="prod-name" placeholder="예: 갤럭시 S25, PGB-04, 맥북 프로 등">
+                <input type="text" id="prod-name" placeholder="예: 갤럭시 S25, PGB-04">
             </div>
             <div class="input-group">
                 <label>발생한 고장 현상 및 이상 증상</label>
-                <textarea id="prod-symptom" placeholder="예: 기기가 너무 뜨거워지고 충전기 인식이 안 됩니다."></textarea>
+                <textarea id="prod-symptom" placeholder="예: 기기가 너무 뜨거워지고 충전이 안 됩니다."></textarea>
             </div>
-            <button id="btn-generate" onclick="askAI()">AI 제품 원인 분석 시작</button>                                    
-            <button id="btn-tts" disabled onclick="speakResult()">🔊 엔지니어 리포트 음성 브리핑</button>                
-        </div>                
-        
-        <div class="dashboard-panel">                        
+            <button id="btn-generate" onclick="askAI()">AI 제품 원인 분석 시작</button>
+            <button id="btn-tts" disabled onclick="speakResult()">🔊 엔지니어 리포트 음성 브리핑</button>
+        </div>
+
+        <div class="dashboard-panel">
             <div class="top-summary-zone">
-                <div class="image-card" id="img-container">
-                  
-                </div>
-                <div class="grid-2">
+                <div class="grid-2" style="width: 100%;">
                     <div class="card">
                         <div class="card-title">진단 대상 제품 (Product Model)</div>
                         <div class="card-value" id="out-name">---</div>
@@ -50,20 +53,23 @@
                     </div>
                 </div>
             </div>
+
             <div class="card">
                 <div class="card-title">하드웨어적 추정 원인 (Root Cause)</div>
-                <div class="card-value" id="out-cause" style="color: #f59e0b; font-size: 18px;">---</div>
+                <div class="card-value" id="out-cause" style="color: #f59e0b;">대기 중...</div>
             </div>
+
             <div class="card" style="flex: 1;">
                 <div class="card-title">공학적 메커니즘 분석 (Hardware Analysis)</div>
                 <div class="report-box" id="out-analysis">대시보드가 실시간 대기 중입니다.</div>
             </div>
+
             <div class="card" style="flex: 1; border-left: 5px solid #10b981;">
                 <div class="card-title" style="color: #10b981;">권장 조치 및 안전 가이드라인 (Recommended Action)</div>
                 <div class="report-box" id="out-solution">---</div>
             </div>
-        </div>        
-    </div>        
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
