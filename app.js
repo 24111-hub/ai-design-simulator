@@ -61,7 +61,6 @@ function applyProductImage(prodName) {
         imgEl.style.display = "block";
     };
 }
-
 async function askAI() {                        
     const prodName = document.getElementById('prod-name').value.trim();
     const prodSymptom = document.getElementById('prod-symptom').value.trim();
@@ -82,10 +81,10 @@ async function askAI() {
     }`;
     
     try {                                
-        // 🔒 [핵심 우회] 구글 서버의 CORS 거부를 완벽히 분쇄하기 위해 text/plain 타입으로 우회 전송
+        // 🔒 [CORS 우회 핵심] application/json 대신 text/plain을 써야 브라우저와 구글이 차단하지 않습니다!
         const response = await fetch(APPS_SCRIPT_URL, { 
             method: 'POST', 
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }, 
             body: JSON.stringify({ prompt: combinedPrompt }) 
         });                                                                
         
@@ -98,24 +97,24 @@ async function askAI() {
           throw new Error("구글 웹앱 권한 승인이 풀렸거나 에러 페이지가 반환되었습니다.");
         }
 
-        // 마크다운 역따옴표 기호 자동 제거 세척기
+        // 혹시 모를 AI의 마크다운 기호(```json) 자동 세척
         cleanText = cleanText.replace(/```json|```/gi, "").trim();
         
         let aiData;
         try {
             aiData = JSON.parse(cleanText);
         } catch (e) {
-            // JSON 파싱 실패 시 튕기지 않고 수동 강제 매핑 처리 (폴백)
+            // JSON 파싱 실패 시 예외 처리 (폴백)
             aiData = {
                 product_name: prodName,
                 danger_level: "🟡 주의",
                 main_cause: "데이터 포맷 예외 발생",
                 analysis: responseText,
-                solution: "구글 앱스 스크립트 내부의 OpenAI API 토큰 잔여량 및 차단 상태를 점검하세요."
+                solution: "정상적으로 텍스트를 수신했으나 JSON 파싱에 실패했습니다."
             };
         }
         
-        // 결과 바인딩
+        // 대시보드 화면에 데이터 결과 매핑
         const levelEl = document.getElementById('out-level');
         levelEl.innerText = aiData.danger_level || "주의";
         if (levelEl.innerText.includes("위험")) { levelEl.style.color = "#ef4444"; } 
@@ -127,7 +126,7 @@ async function askAI() {
         document.getElementById('out-analysis').innerText = aiData.analysis;
         document.getElementById('out-solution').innerText = aiData.solution;
         
-        // 이미지 최적화 함수 호출
+        // 🎨 보조배터리 이미지 시각화 함수 작동
         applyProductImage(prodName);
 
         document.getElementById('btn-tts').disabled = false;
@@ -135,13 +134,17 @@ async function askAI() {
         speakResult();                                
     } catch (error) {                                
         console.error(error);                                
-        document.getElementById('out-analysis').innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">⚠️ [치명적인 연동 결함 발생]</span><br><br>에러 메세지: ${error.message}<br><br>[해결 가이드]<br>1. Google Apps Script 배포 시 Access 권한을 반드시 'Anyone'으로 설정했는지 확인하세요.<br>2. GAS 코드 내부의 OpenAI API 키가 올바른지 다시 점검하세요.`;                        
+        document.getElementById('out-analysis').innerHTML = `
+            <span style="color:#ff6b6b; font-weight:bold;">⚠️ [치명적인 연동 결함 발생]</span><br><br>
+            에러 메세지: ${error.message}<br><br>
+            [해결 가이드]<br>
+            1. app.js 맨 위의 APPS_SCRIPT_URL 주소가 구글에서 복사한 최신 /exec 주소가 맞는지 확인하세요.
+        `;                        
     } finally {
         btn.innerText = "AI 제품 원인 분석 시작";
         btn.disabled = false;
     }
-}                
-
+}
 function speakResult() {                        
     if (!currentSolutionText) return;                                    
     window.speechSynthesis.cancel();                         
